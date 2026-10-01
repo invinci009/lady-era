@@ -12,12 +12,12 @@ export const metadata: Metadata = {
     default: 'ReviewPulse — Restaurant Feedback & Authentic Reviews',
     template: '%s | ReviewPulse',
   },
-  description: 'QR-based customer feedback platform for Biryani Charminar with AI-assisted review drafting',
-  applicationName: 'ReviewPulse',
+  description: 'QR-based customer feedback platform for PM Zaika Restaurant with AI-assisted review drafting',
+  applicationName: 'PM Zaika Feedback',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'ReviewPulse',
+    title: 'PM Zaika',
   },
   formatDetection: {
     telephone: false,

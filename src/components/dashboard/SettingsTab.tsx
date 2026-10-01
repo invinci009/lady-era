@@ -17,12 +17,15 @@ import {
   Lock,
   Sparkles,
   Sliders,
+  Phone,
 } from 'lucide-react'
 
 export interface BusinessSettings {
   id: string
   name: string
   location: string | null
+  phone?: string | null
+  secondaryPhone?: string | null
   googleReviewUrl: string | null
   welcomeMessage: any
   primaryColor: string | null
@@ -45,6 +48,8 @@ export default function SettingsTab({
   // Restaurant Profile state
   const [name, setName] = useState(business.name)
   const [location, setLocation] = useState(business.location || '')
+  const [phone, setPhone] = useState(business.phone || '7488260572')
+  const [secondaryPhone, setSecondaryPhone] = useState(business.secondaryPhone || '06123112128, 9525748843')
   const [googleUrl, setGoogleUrl] = useState(business.googleReviewUrl || '')
   const [welcomeText, setWelcomeText] = useState(
     (typeof business.welcomeMessage === 'object' && business.welcomeMessage?.en) ||
@@ -99,6 +104,8 @@ export default function SettingsTab({
         body: JSON.stringify({
           name: name.trim(),
           location: location.trim() || undefined,
+          phone: phone.trim() || undefined,
+          secondary_phone: secondaryPhone.trim() || undefined,
           google_review_url: googleUrl.trim() || null,
           welcome_message: { en: welcomeText.trim() },
           primary_color: primaryColor || null,
@@ -258,15 +265,55 @@ export default function SettingsTab({
 
               <div className="space-y-1.5">
                 <Label htmlFor="sLoc" className="text-xs font-medium text-slate-300">
-                  Location
+                  Location / Full Address
                 </Label>
                 <Input
                   id="sLoc"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="City or branch name"
+                  placeholder="Shershah Road, Gur ki Mandi, Gulzarbagh, Patna"
                   className="bg-slate-950/60 border-slate-800 text-white h-10 text-xs rounded-xl"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="sPhone" className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-amber-400" />
+                      Main Customer Helpline No.
+                    </Label>
+                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                      Customer Facing
+                    </span>
+                  </div>
+                  <Input
+                    id="sPhone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="7488260572"
+                    className="bg-slate-950/60 border-slate-800 text-white h-10 text-xs rounded-xl"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Primary number displayed to diners on survey &amp; thank you cards.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="sSecPhone" className="text-xs font-medium text-slate-300">
+                    Secondary Lines (Landline / Backup)
+                  </Label>
+                  <Input
+                    id="sSecPhone"
+                    value={secondaryPhone}
+                    onChange={(e) => setSecondaryPhone(e.target.value)}
+                    placeholder="06123112128, 9525748843"
+                    className="bg-slate-950/60 border-slate-800 text-white h-10 text-xs rounded-xl"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Additional numbers shown in contact details.
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -350,7 +397,8 @@ export default function SettingsTab({
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Aliases supported for login: <strong className="text-slate-300">admin</strong>,{' '}
                   <strong className="text-slate-300">owner</strong>,{' '}
-                  <strong className="text-slate-300">biryani</strong>
+                  <strong className="text-slate-300">zaika</strong>,{' '}
+                  <strong className="text-slate-300">pmzaika</strong>
                 </p>
               </div>
             </div>

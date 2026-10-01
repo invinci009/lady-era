@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/supabase/types'
+import { resolveZaikaEmail } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,17 +33,7 @@ export async function POST(request: NextRequest) {
 
     // 1. Resolve alias or custom username if provided
     if (username && typeof username === 'string') {
-      const lower = username.trim().toLowerCase()
-      if (
-        lower === 'admin' ||
-        lower === 'owner' ||
-        lower === 'biryani' ||
-        lower === 'charminar'
-      ) {
-        targetEmail = 'invincibleperson9@gmail.com'
-      } else {
-        targetEmail = username.trim()
-      }
+      targetEmail = resolveZaikaEmail(username)
     }
 
     // 2. Check active authenticated session if no explicit username provided

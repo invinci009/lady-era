@@ -27,12 +27,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-500 flex items-center justify-center text-white font-extrabold shadow-md shadow-amber-600/20 group-hover:scale-105 transition-transform border border-amber-400/30">
-                BC
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-500 flex items-center justify-center text-white font-extrabold shadow-md shadow-amber-600/20 group-hover:scale-105 transition-transform border border-amber-400/30 text-xs tracking-wider">
+                PMZ
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-base text-white tracking-tight leading-tight">Biryani Charminar</span>
-                <span className="text-[10px] text-amber-400 font-semibold leading-none">ReviewPulse Portal</span>
+                <span className="font-bold text-base text-white tracking-tight leading-tight">PM Zaika Restaurant</span>
+                <span className="text-[10px] text-amber-400 font-semibold leading-none">ReviewPulse Portal • Patna</span>
               </div>
             </Link>
 
@@ -88,7 +88,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 {user.email}
               </span>
               <span className="text-[11px] text-amber-400 font-medium flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" /> Biryani Charminar Owner
+                <Sparkles className="w-3 h-3 text-amber-400" /> PM Zaika Owner
               </span>
             </div>
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import type { Database } from '@/lib/supabase/types'
+import { resolveZaikaEmail } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,16 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Resolve owner aliases
-    let resolvedEmail = String(username).trim()
-    const lower = resolvedEmail.toLowerCase()
-    if (
-      lower === 'admin' ||
-      lower === 'owner' ||
-      lower === 'biryani' ||
-      lower === 'charminar'
-    ) {
-      resolvedEmail = 'invincibleperson9@gmail.com'
-    }
+    const resolvedEmail = resolveZaikaEmail(username) || String(username).trim()
 
     // Prepare response object to collect cookies
     let response = NextResponse.json({ success: true })

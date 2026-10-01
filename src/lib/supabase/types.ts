@@ -16,6 +16,8 @@ export interface Database {
           name: string
           category: string
           location: string | null
+          phone: string | null
+          secondary_phone: string | null
           timezone: string
           logo_url: string | null
           primary_color: string | null
@@ -31,6 +33,8 @@ export interface Database {
           name: string
           category?: string
           location?: string | null
+          phone?: string | null
+          secondary_phone?: string | null
           timezone?: string
           logo_url?: string | null
           primary_color?: string | null
@@ -46,6 +50,8 @@ export interface Database {
           name?: string
           category?: string
           location?: string | null
+          phone?: string | null
+          secondary_phone?: string | null
           timezone?: string
           logo_url?: string | null
           primary_color?: string | null

@@ -1,6 +1,6 @@
 'use client'
 
-import { Heart, RotateCcw, Calendar, ExternalLink, Sparkles, CheckCircle2, MapPin, Share2 } from 'lucide-react'
+import { Heart, RotateCcw, Calendar, ExternalLink, Sparkles, CheckCircle2, MapPin, Share2, Phone } from 'lucide-react'
 
 interface ThankYouCardProps {
   restaurantName: string
@@ -15,7 +15,7 @@ export default function ThankYouCard({ restaurantName, slug }: ThankYouCardProps
       try {
         await navigator.share({
           title: `${restaurantName} — Authentic Dining Experience`,
-          text: `Check out ${restaurantName} in Patna for authentic Hyderabadi Dum Biryani!`,
+          text: `Check out ${restaurantName} on Shershah Road, Gur ki Mandi, Gulzarbagh, Patna!`,
           url,
         })
       } catch {}
@@ -51,7 +51,7 @@ export default function ThankYouCard({ restaurantName, slug }: ThankYouCardProps
 
           <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-xs mx-auto">
             Your honest thoughts help the chef and team at{' '}
-            <strong className="text-stone-800 font-semibold">{restaurantName}</strong> maintain
+            <strong className="text-stone-800 font-semibold">{restaurantName || 'PM Zaika Restaurant'}</strong> maintain
             the highest culinary standard.
           </p>
         </div>
@@ -68,34 +68,31 @@ export default function ThankYouCard({ restaurantName, slug }: ThankYouCardProps
             </span>
           </div>
           <p className="text-xs text-stone-600 leading-relaxed">
-            Our management team and kitchen staff review every review to continually perfect our Hyderabadi Dum Biryani, kebabs, and hospitality. We look forward to hosting you again soon!
+            Our management team and kitchen staff review every response to continually perfect our recipes, zaika delicacies, and hospitality. We look forward to hosting you again soon!
           </p>
         </div>
 
-        {/* Useful Quick Action Buttons */}
+        {/* Customer Helpline & Quick Action Buttons */}
         <div className="space-y-2.5 pt-1">
-          {/* Primary: Reserve Table */}
+          {/* Primary: Direct Call to Restaurant */}
           <a
-            href="https://www.google.com/maps/reserve/v/dine/c/XvYn-6P8yQQ"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="tel:7488260572"
             className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-bold shadow-lg shadow-amber-600/25 flex items-center justify-center gap-2 text-sm transition-all duration-200 cursor-pointer active:scale-95"
           >
-            <Calendar className="w-4 h-4" />
-            <span>Reserve Table for Next Visit</span>
-            <ExternalLink className="w-3.5 h-3.5 text-white/80" />
+            <Phone className="w-4 h-4" />
+            <span>Call Restaurant: +91 74882 60572</span>
           </a>
 
           {/* Secondary Buttons Row */}
           <div className="grid grid-cols-2 gap-2">
             <a
-              href="https://maps.google.com/?cid=12683935391307779774"
+              href="https://maps.google.com/?q=PM+Zaika+Restaurant+Shershah+Road+Gulzarbagh+Patna"
               target="_blank"
               rel="noopener noreferrer"
               className="h-11 px-3 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200/90 text-stone-700 hover:text-stone-900 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
             >
               <MapPin className="w-3.5 h-3.5 text-rose-500" />
-              <span>Google Maps</span>
+              <span>Directions</span>
             </a>
 
             <button
@@ -104,7 +101,7 @@ export default function ThankYouCard({ restaurantName, slug }: ThankYouCardProps
               className="h-11 px-3 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200/90 text-stone-700 hover:text-stone-900 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
             >
               <Share2 className="w-3.5 h-3.5 text-teal-600" />
-              <span>Share Restaurant</span>
+              <span>Share Link</span>
             </button>
           </div>
         </div>

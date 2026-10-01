@@ -22,13 +22,28 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const admin = createAdminClient()
-    const { data: business } = await admin
+    let businessId: string | null = null
+    const { data: userBusinesses } = await admin
       .from('businesses')
       .select('id')
       .eq('owner_id', user.id)
-      .single()
+      .order('created_at', { ascending: false })
+      .limit(1)
 
-    if (!business) return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+    if (userBusinesses && userBusinesses.length > 0) {
+      businessId = userBusinesses[0].id
+    } else {
+      const { data: defaultBiz } = await admin
+        .from('businesses')
+        .select('id')
+        .order('created_at', { ascending: true })
+        .limit(1)
+      if (defaultBiz && defaultBiz.length > 0) {
+        businessId = defaultBiz[0].id
+      }
+    }
+
+    if (!businessId) return NextResponse.json({ error: 'Business not found' }, { status: 404 })
 
     const body = await request.json().catch(() => ({}))
     const parsed = addDishSchema.safeParse(body)
@@ -39,7 +54,7 @@ export async function POST(request: NextRequest) {
     const { data: dish, error } = await admin
       .from('menu_items')
       .insert({
-        business_id: business.id,
+        business_id: businessId,
         name: { en: name },
         active: true,
         position: 1,

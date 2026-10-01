@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import type { Database } from '@/lib/supabase/types'
+import { resolveZaikaEmail } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,16 +15,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let resolvedEmail = username.trim()
-    const lower = resolvedEmail.toLowerCase()
-    if (
-      lower === 'admin' ||
-      lower === 'owner' ||
-      lower === 'biryani' ||
-      lower === 'charminar'
-    ) {
-      resolvedEmail = 'invincibleperson9@gmail.com'
-    }
+    const resolvedEmail = resolveZaikaEmail(username) || username.trim()
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

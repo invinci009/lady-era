@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Utensils } from 'lucide-react'
+import { ArrowLeft, Utensils, Phone } from 'lucide-react'
 
 interface QuizProgressHeaderProps {
   restaurantName: string
@@ -48,15 +48,26 @@ export default function QuizProgressHeader({
             </div>
             <div>
               <span className="text-sm font-bold text-stone-900 truncate block max-w-[180px] sm:max-w-xs">
-                {restaurantName}
+                {restaurantName || 'PM Zaika Restaurant'}
               </span>
-              <span className="text-[10px] text-amber-800 font-semibold block">बिरयानी चारमीनार</span>
+              <span className="text-[10px] text-amber-800 font-semibold block">पीएम ज़ायका रेस्टोरेंट</span>
             </div>
           </div>
         </div>
 
-        <div className="text-xs font-semibold text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full border border-stone-200">
-          Step <span className="text-amber-800 font-bold">{currentStep}</span> of {totalSteps}
+        <div className="flex items-center gap-2">
+          <a
+            href="tel:7488260572"
+            className="flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-full border border-amber-300 transition-colors shadow-2xs"
+            title="Helpline: +91 7488260572"
+          >
+            <Phone className="w-3 h-3 text-amber-700" />
+            <span className="hidden sm:inline">Call:</span>
+            <span>7488260572</span>
+          </a>
+          <div className="text-xs font-semibold text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full border border-stone-200">
+            Step <span className="text-amber-800 font-bold">{currentStep}</span> of {totalSteps}
+          </div>
         </div>
       </div>
 

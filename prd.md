@@ -553,4 +553,3 @@ Auto-posting or scraping Google reviews · customer accounts · incentives or re
 9. Added missing tables/constraints (`menu_items`, `private_feedback`, `session_flags`, `answers` value type, session status, idempotency).
 10. Fixed stack ambiguity (Next.js only; FastAPI removed from MVP).
 11. Added ID/priority scheme, precedence rules and explicit out-of-scope list.
-

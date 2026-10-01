@@ -28,12 +28,22 @@ export async function POST(request: NextRequest) {
     const admin = createAdminClient()
     const data = parsed.data
 
-    // Check if user already owns a business
-    const { data: existing } = await admin
+    // Check if user or system already has a business
+    const { data: userBusinesses } = await admin
       .from('businesses')
       .select('id')
       .eq('owner_id', user.id)
-      .single()
+      .limit(1)
+
+    let existing = userBusinesses?.[0]
+    if (!existing) {
+      const { data: defaultBiz } = await admin
+        .from('businesses')
+        .select('id')
+        .order('created_at', { ascending: true })
+        .limit(1)
+      existing = defaultBiz?.[0]
+    }
 
     let businessId: string
 
@@ -44,6 +54,8 @@ export async function POST(request: NextRequest) {
         .update({
           name: data.name,
           location: data.location || null,
+          phone: data.phone || null,
+          secondary_phone: data.secondary_phone || null,
           timezone: data.timezone,
           logo_url: data.logo_url || null,
           primary_color: data.primary_color || null,
@@ -68,6 +80,8 @@ export async function POST(request: NextRequest) {
           name: data.name,
           category: 'restaurant',
           location: data.location || null,
+          phone: data.phone || null,
+          secondary_phone: data.secondary_phone || null,
           timezone: data.timezone,
           logo_url: data.logo_url || null,
           primary_color: data.primary_color || null,

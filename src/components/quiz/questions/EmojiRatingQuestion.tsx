@@ -48,7 +48,7 @@ export default function EmojiRatingQuestion({ value, onChange }: EmojiRatingQues
         <h2 className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
           How did you find the{' '}
           <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-yellow-600 bg-clip-text text-transparent">
-            food &amp; biryani
+            food &amp; flavors
           </span>
           ?
         </h2>

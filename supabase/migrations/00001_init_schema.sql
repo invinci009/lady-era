@@ -13,6 +13,8 @@ CREATE TABLE businesses (
   name TEXT NOT NULL,
   category TEXT NOT NULL DEFAULT 'restaurant' CHECK (category IN ('restaurant')),
   location TEXT,
+  phone TEXT,
+  secondary_phone TEXT,
   timezone TEXT NOT NULL DEFAULT 'Asia/Kolkata',
   logo_url TEXT,
   primary_color TEXT,

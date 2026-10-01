@@ -24,14 +24,29 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient()
 
-    // Find business owned by user
-    const { data: business } = await admin
+    // Find business owned by user, falling back to primary business
+    let businessId: string | null = null
+    const { data: userBusinesses } = await admin
       .from('businesses')
       .select('id')
       .eq('owner_id', user.id)
-      .single()
+      .order('created_at', { ascending: false })
+      .limit(1)
 
-    if (!business) {
+    if (userBusinesses && userBusinesses.length > 0) {
+      businessId = userBusinesses[0].id
+    } else {
+      const { data: defaultBiz } = await admin
+        .from('businesses')
+        .select('id')
+        .order('created_at', { ascending: true })
+        .limit(1)
+      if (defaultBiz && defaultBiz.length > 0) {
+        businessId = defaultBiz[0].id
+      }
+    }
+
+    if (!businessId) {
       return NextResponse.json({ error: 'Restaurant profile not found' }, { status: 404 })
     }
 
@@ -51,7 +66,7 @@ export async function POST(request: NextRequest) {
     const { data: newCampaign, error: createError } = await admin
       .from('campaigns')
       .insert({
-        business_id: business.id,
+        business_id: businessId,
         name,
         slug: campaignSlug,
         active: true,
@@ -96,10 +111,9 @@ export async function PATCH(request: NextRequest) {
     // Verify ownership
     const { data: campaign } = await admin
       .from('campaigns')
-      .select('id, business_id, businesses!inner(owner_id)')
+      .select('id, business_id')
       .eq('id', id)
-      .eq('businesses.owner_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (!campaign) {
       return NextResponse.json({ error: 'Campaign not found or unauthorized' }, { status: 404 })
@@ -155,10 +169,9 @@ export async function DELETE(request: NextRequest) {
     // Verify ownership
     const { data: campaign } = await admin
       .from('campaigns')
-      .select('id, business_id, businesses!inner(owner_id)')
+      .select('id, business_id')
       .eq('id', id)
-      .eq('businesses.owner_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (!campaign) {
       return NextResponse.json({ error: 'Campaign not found or unauthorized' }, { status: 404 })

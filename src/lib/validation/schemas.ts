@@ -87,6 +87,8 @@ export const businessCreateSchema = z.object({
   name: z.string().min(1).max(200),
   category: z.literal('restaurant').default('restaurant'),
   location: z.string().max(500).optional(),
+  phone: z.string().max(50).optional().nullable(),
+  secondary_phone: z.string().max(100).optional().nullable(),
   timezone: z.string().default('Asia/Kolkata'),
   logo_url: z.string().url().optional().nullable(),
   primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional().nullable(),

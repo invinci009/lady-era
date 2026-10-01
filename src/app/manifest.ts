@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ReviewPulse — Restaurant Feedback & Reviews',
-    short_name: 'ReviewPulse',
-    description: 'Instant QR customer feedback, smart AI reviews & live restaurant management dashboard for Biryani Charminar',
+    name: 'PM Zaika Restaurant — Feedback & Reviews',
+    short_name: 'PM Zaika',
+    description: 'Instant QR customer feedback, smart AI reviews & live restaurant management dashboard for PM Zaika Restaurant, Patna',
     start_url: '/',
     scope: '/',
     display: 'standalone',
@@ -44,8 +44,8 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: 'Guest Feedback Survey',
         short_name: 'Feedback',
-        description: 'Open customer survey experience for Biryani Charminar',
-        url: '/r/patna-dining',
+        description: 'Open customer survey experience for PM Zaika Restaurant',
+        url: '/r/pm-zaika',
         icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
       },
       {

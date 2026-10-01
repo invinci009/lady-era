@@ -11,11 +11,12 @@ import { Utensils, ArrowRight, Loader2, Sparkles, ShieldCheck, CheckCircle2 } fr
 export default function OnboardingWizard() {
   const router = useRouter()
   const [step, setStep] = useState(1)
-  const [name, setName] = useState('')
-  const [location, setLocation] = useState('')
+  const [name, setName] = useState('PM Zaika Restaurant')
+  const [location, setLocation] = useState('Shershah Road, Gur ki Mandi, Infront of Bank of India, PO - Gulzarbagh , Patna - 800007')
+  const [phone, setPhone] = useState('7488260572')
   const [googleReviewUrl, setGoogleReviewUrl] = useState('')
   const [welcomeMessage, setWelcomeMessage] = useState(
-    "Thanks for dining with us! We'd love to hear about your experience today."
+    'Welcome to PM Zaika Restaurant! Share your honest dining experience with us in 30 seconds. For helpline & orders call 7488260572.'
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -37,6 +38,7 @@ export default function OnboardingWizard() {
           name: name.trim(),
           category: 'restaurant',
           location: location.trim() || undefined,
+          phone: phone.trim() || undefined,
           google_review_url: googleReviewUrl.trim() || null,
           welcome_message: { en: welcomeMessage.trim() },
         }),
