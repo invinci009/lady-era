@@ -287,7 +287,7 @@ BEGIN
       'Asia/Kolkata',
       '#d97706',
       '{"en": "Welcome to PM Zaika Restaurant! Share your honest dining experience with us in 30 seconds. For helpline & orders call 7488260572."}'::jsonb,
-      'https://maps.google.com/?q=PM+Zaika+Restaurant+Shershah+Road+Gulzarbagh+Patna'
+      'https://search.google.com/local/writereview?placeid=ChIJ52esmZNf7TkRoznWIQnz7uo'
     )
     RETURNING id INTO v_business_id;
   ELSE
@@ -297,7 +297,7 @@ BEGIN
       phone = '7488260572',
       secondary_phone = '06123112128, 9525748843',
       welcome_message = '{"en": "Welcome to PM Zaika Restaurant! Share your honest dining experience with us in 30 seconds. For helpline & orders call 7488260572."}'::jsonb,
-      google_review_url = 'https://maps.google.com/?q=PM+Zaika+Restaurant+Shershah+Road+Gulzarbagh+Patna',
+      google_review_url = 'https://search.google.com/local/writereview?placeid=ChIJ52esmZNf7TkRoznWIQnz7uo',
       updated_at = now()
     WHERE id = v_business_id;
   END IF;
