@@ -1,7 +1,12 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const params = await searchParams
   const supabase = await createClient()
   const {
     data: { user },
@@ -11,5 +16,13 @@ export default async function HomePage() {
     redirect('/dashboard')
   }
 
-  redirect('/login')
+  const query = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === 'string') {
+      query.set(key, value)
+    }
+  }
+  const queryString = query.toString()
+
+  redirect(queryString ? `/login?${queryString}` : '/login')
 }

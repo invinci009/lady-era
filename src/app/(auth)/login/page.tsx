@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,6 +16,26 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const searchParams = new URLSearchParams(window.location.search)
+    const hashString = window.location.hash.replace(/^#/, '')
+    const hashParams = new URLSearchParams(hashString)
+
+    const errorCode = searchParams.get('error_code') || hashParams.get('error_code')
+    const errorDescription = searchParams.get('error_description') || hashParams.get('error_description')
+    const generalError = searchParams.get('error') || hashParams.get('error')
+
+    if (errorCode === 'otp_expired') {
+      setError('The password reset link is invalid or has expired. Please request a new one using "Forgot / Change Password?".')
+    } else if (errorDescription) {
+      setError(decodeURIComponent(errorDescription.replace(/\+/g, ' ')))
+    } else if (generalError === 'auth_callback_failed') {
+      setError('Authentication callback failed. Please try logging in again or request a new reset link.')
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

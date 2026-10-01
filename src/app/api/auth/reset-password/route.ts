@@ -17,6 +17,21 @@ export async function POST(request: NextRequest) {
 
     const resolvedEmail = resolveZaikaEmail(username) || username.trim()
 
+    // Determine canonical origin (localhost:3000 in local dev, public domain in production)
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1')
+    const proto = request.headers.get('x-forwarded-proto') || (isLocal ? 'http' : 'https')
+
+    const origin = isLocal
+      ? `${proto}://${host}`
+      : (process.env.NEXT_PUBLIC_APP_URL || (host ? `${proto}://${host}` : request.nextUrl.origin) || 'http://localhost:3000').replace(/\/$/, '')
+
+    // Response prepared to capture any PKCE cookies set by supabase
+    const response = NextResponse.json({
+      success: true,
+      message: `Password reset instructions sent to ${resolvedEmail}. Please check your email inbox (and Spam/Junk folder).`,
+    })
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
@@ -26,27 +41,41 @@ export async function POST(request: NextRequest) {
       {
         cookies: {
           getAll: () => request.cookies.getAll(),
-          setAll: () => {},
+          setAll: (cookiesToSet) => {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, {
+                ...options,
+                path: '/',
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
+              })
+            })
+          },
         },
       }
     )
 
-    const origin = request.nextUrl.origin || 'http://localhost:3000'
-    const { error } = await supabase.auth.resetPasswordForEmail(resolvedEmail, {
-      redirectTo: `${origin}/auth/callback?next=/dashboard?tab=settings`,
+    // Redirect user to /auth/callback which establishes session and lands on /reset-password
+    const nextPath = encodeURIComponent('/reset-password')
+    const redirectUrl = `${origin}/auth/callback?next=${nextPath}`
+
+    // Dispatch recovery email via Supabase Auth
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(resolvedEmail, {
+      redirectTo: redirectUrl,
     })
 
-    if (error) {
+    if (resetError) {
+      let msg = resetError.message || 'Failed to dispatch reset link.'
+      if (msg.toLowerCase().includes('rate limit')) {
+        msg = 'Too many reset attempts in a short time (email rate limit reached). Please wait a few minutes before trying again.'
+      }
       return NextResponse.json(
-        { error: error.message || 'Failed to dispatch reset link.' },
-        { status: 400 }
+        { error: msg },
+        { status: 429 }
       )
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `Password reset instructions sent to ${resolvedEmail}.`,
-    })
+    return response
   } catch (err: any) {
     console.error('Password reset error:', err)
     return NextResponse.json(
