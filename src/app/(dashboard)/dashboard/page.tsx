@@ -11,6 +11,9 @@ interface DashboardPageProps {
   searchParams: Promise<{ tab?: string }>
 }
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { tab } = await searchParams
   const supabase = await createClient()
