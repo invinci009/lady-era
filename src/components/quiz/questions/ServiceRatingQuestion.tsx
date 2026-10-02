@@ -63,7 +63,7 @@ const SERVICE_OPTIONS = [
   {
     rating: 5,
     label: 'Royal & Excellent',
-    desc: 'Outstanding Mughlai hospitality & care',
+    desc: 'Outstanding hospitality & care',
     icon: Crown,
     activeBorder: 'border-amber-500',
     activeBg: 'bg-gradient-to-r from-amber-50 via-amber-100/40 to-amber-50',

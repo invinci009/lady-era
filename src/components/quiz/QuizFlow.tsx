@@ -294,7 +294,7 @@ export default function QuizFlow({
                 {restaurantName || 'PM Zaika Restaurant'}
               </h1>
               <p className="text-sm font-semibold text-amber-800">
-                पीएम ज़ायका रेस्टोरेंट • Authentic Mughlai, Biryani & Chinese
+                पीएम ज़ायका रेस्टोरेंट • Authentic Biryani & Chinese
               </p>
               <div className="pt-1 flex items-center justify-center gap-2 text-xs text-stone-500">
                 <span className="flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60">
