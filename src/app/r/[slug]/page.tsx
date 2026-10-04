@@ -14,13 +14,54 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
   const { new: forceNew } = await searchParams
   const config = getRestaurantConfig()
 
-  // 1. Look up campaign by slug
-  let campaign = await getCampaignBySlug(slug)
+  // 1. Look up campaign by slug.
+  // If the server backend (Firebase Admin) is missing/misconfigured on the
+  // host, these calls throw — show a friendly "unavailable" screen instead
+  // of a generic 500.
+  let backendUnavailable = false
+  let campaign = await getCampaignBySlug(slug).catch((err) => {
+    console.error('PublicQuizPage: campaign lookup failed:', err)
+    backendUnavailable = true
+    return null
+  })
 
   // Graceful fallback: If this slug was deleted or user enters custom slug, resolve to the active campaign
-  if (!campaign) {
-    const campaigns = await import('@/lib/firebase/firestore').then(m => m.getCampaigns())
-    campaign = campaigns.find(c => c.active) || null
+  if (!campaign && !backendUnavailable) {
+    const campaigns = await import('@/lib/firebase/firestore')
+      .then((m) => m.getCampaigns())
+      .catch((err) => {
+        console.error('PublicQuizPage: campaigns fallback failed:', err)
+        backendUnavailable = true
+        return null
+      })
+    campaign = campaigns?.find((c) => c.active) || null
+  }
+
+  // Backend (Firestore) unreachable — friendly fallback instead of a 500
+  if (backendUnavailable) {
+    return (
+      <div className="min-h-screen bg-stone-50 text-stone-900 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm text-center p-6 sm:p-8 rounded-3xl bg-white border border-stone-200 shadow-xl space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold text-stone-900">Feedback Temporarily Unavailable</h1>
+          <p className="text-sm text-stone-500">
+            We&apos;re having trouble reaching our servers right now. Please try again in a moment, or ask your server at {config.name} for assistance.
+          </p>
+          {config.contact.phone && (
+            <div className="pt-2">
+              <a
+                href={`tel:${config.contact.phone}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-900 hover:bg-amber-100 transition-colors"
+              >
+                Call: {config.contact.phone}
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    )
   }
 
   // Fallback screen if no campaign exists at all
@@ -79,8 +120,11 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
 
   const googleReviewUrl = campaign.googleReviewUrlOverride || config.google.reviewUrl
 
-  // 2. Fetch menu items for the ordered items step
-  const menuItems = await getMenuItems()
+  // 2. Fetch menu items for the ordered items step (empty list if backend fails)
+  const menuItems = await getMenuItems().catch((err) => {
+    console.error('PublicQuizPage: menu items lookup failed:', err)
+    return []
+  })
 
   // 3. Resume existing session if cookie is present and ?new=1 is NOT passed
   let existingSessionId: string | null = null
@@ -92,7 +136,10 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
     const cookieStore = await cookies()
     const sessionCookie = cookieStore.get('rp_session')
     if (sessionCookie?.value) {
-      const session = await getSession(sessionCookie.value)
+      // Session resume is best-effort: if the backend fails, start fresh
+      // instead of crashing the page.
+      try {
+        const session = await getSession(sessionCookie.value)
 
       if (session && session.campaignId === campaign.id) {
         existingSessionId = session.id
@@ -109,6 +156,9 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
             existingDraftText = draft.finalText || draft.originalText || null
           }
         }
+      }
+      } catch (err) {
+        console.error('PublicQuizPage: session resume failed, starting fresh:', err)
       }
     }
   }
