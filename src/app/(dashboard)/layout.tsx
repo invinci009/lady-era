@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Sparkles, LayoutDashboard, QrCode, MessageSquare, Utensils, Settings, LogOut, Users } from 'lucide-react'
 import { getRestaurantConfig } from '@/config/loader'
 import { getBrandingTokens } from '@/config/branding'
-import { validateSession } from '@/lib/firebase/auth'
+import type { AuthUser } from '@/lib/firebase/auth'
 import { cookies } from 'next/headers'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -18,7 +18,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login')
   }
 
-  const user = await validateSession(idToken)
+  // Lazy import inside try/catch: if the Firebase Admin bundle cannot be
+  // loaded in this runtime, redirect to login instead of 500ing.
+  // redirect() stays outside try/catch — it works by throwing.
+  let user: AuthUser | null = null
+  try {
+    const { validateSession } = await import('@/lib/firebase/auth')
+    user = await validateSession(idToken)
+  } catch (err) {
+    console.error('DashboardLayout: session validation unavailable:', err)
+    user = null
+  }
   if (!user) {
     redirect('/login')
   }

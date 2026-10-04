@@ -2,7 +2,6 @@ import QuizFlow, { type QuizAnswerValue } from '@/components/quiz/QuizFlow'
 import { Sparkles, AlertTriangle } from 'lucide-react'
 import { cookies } from 'next/headers'
 import { getRestaurantConfig } from '@/config/loader'
-import { getCampaignBySlug, getMenuItems, getSession, getSessionAnswers, getReviewDraft } from '@/lib/firebase/firestore'
 
 interface PublicQuizPageProps {
   params: Promise<{ slug: string }>
@@ -15,20 +14,30 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
   const config = getRestaurantConfig()
 
   // 1. Look up campaign by slug.
-  // If the server backend (Firebase Admin) is missing/misconfigured on the
-  // host, these calls throw — show a friendly "unavailable" screen instead
-  // of a generic 500.
+  // The backend is imported lazily inside try/catch: if the Firebase Admin
+  // bundle cannot even be loaded in this runtime, `firestore` stays null
+  // and we show a friendly "unavailable" screen instead of a generic 500.
   let backendUnavailable = false
-  let campaign = await getCampaignBySlug(slug).catch((err) => {
-    console.error('PublicQuizPage: campaign lookup failed:', err)
+  let firestore: typeof import('@/lib/firebase/firestore') | null = null
+  try {
+    firestore = await import('@/lib/firebase/firestore')
+  } catch (err) {
+    console.error('PublicQuizPage: backend import failed:', err)
     backendUnavailable = true
-    return null
-  })
+  }
+
+  let campaign = firestore
+    ? await firestore.getCampaignBySlug(slug).catch((err) => {
+        console.error('PublicQuizPage: campaign lookup failed:', err)
+        backendUnavailable = true
+        return null
+      })
+    : null
 
   // Graceful fallback: If this slug was deleted or user enters custom slug, resolve to the active campaign
-  if (!campaign && !backendUnavailable) {
-    const campaigns = await import('@/lib/firebase/firestore')
-      .then((m) => m.getCampaigns())
+  if (firestore && !campaign && !backendUnavailable) {
+    const campaigns = await firestore
+      .getCampaigns()
       .catch((err) => {
         console.error('PublicQuizPage: campaigns fallback failed:', err)
         backendUnavailable = true
@@ -121,10 +130,12 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
   const googleReviewUrl = campaign.googleReviewUrlOverride || config.google.reviewUrl
 
   // 2. Fetch menu items for the ordered items step (empty list if backend fails)
-  const menuItems = await getMenuItems().catch((err) => {
-    console.error('PublicQuizPage: menu items lookup failed:', err)
-    return []
-  })
+  const menuItems = firestore
+    ? await firestore.getMenuItems().catch((err) => {
+        console.error('PublicQuizPage: menu items lookup failed:', err)
+        return []
+      })
+    : []
 
   // 3. Resume existing session if cookie is present and ?new=1 is NOT passed
   let existingSessionId: string | null = null
@@ -132,31 +143,31 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
   const existingAnswers: Record<string, unknown> = {}
   let existingDraftText: string | null = null
 
-  if (forceNew !== '1') {
+  if (firestore && forceNew !== '1') {
     const cookieStore = await cookies()
     const sessionCookie = cookieStore.get('rp_session')
     if (sessionCookie?.value) {
       // Session resume is best-effort: if the backend fails, start fresh
       // instead of crashing the page.
       try {
-        const session = await getSession(sessionCookie.value)
+        const session = await firestore.getSession(sessionCookie.value)
 
-      if (session && session.campaignId === campaign.id) {
-        existingSessionId = session.id
-        existingStatus = session.status
+        if (session && session.campaignId === campaign.id) {
+          existingSessionId = session.id
+          existingStatus = session.status
 
-        const answers = await getSessionAnswers(session.id)
-        for (const a of answers) {
-          existingAnswers[a.questionKey] = a.value
-        }
+          const answers = await firestore.getSessionAnswers(session.id)
+          for (const a of answers) {
+            existingAnswers[a.questionKey] = a.value
+          }
 
-        if (session.status === 'completed') {
-          const draft = await getReviewDraft(session.id)
-          if (draft) {
-            existingDraftText = draft.finalText || draft.originalText || null
+          if (session.status === 'completed') {
+            const draft = await firestore.getReviewDraft(session.id)
+            if (draft) {
+              existingDraftText = draft.finalText || draft.originalText || null
+            }
           }
         }
-      }
       } catch (err) {
         console.error('PublicQuizPage: session resume failed, starting fresh:', err)
       }
