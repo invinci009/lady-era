@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { logEvent } from '@/lib/firebase/firestore'
 import { getSessionFromCookie } from '@/lib/session/cookie'
 import { clientEventSchema } from '@/lib/validation/schemas'
 
@@ -19,6 +19,7 @@ export async function POST(request: NextRequest, { params }: RouteProps) {
 
     const body = await request.json().catch(() => ({}))
     const parsed = clientEventSchema.safeParse(body)
+
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Invalid event payload', details: parsed.error.flatten() },
@@ -27,30 +28,18 @@ export async function POST(request: NextRequest, { params }: RouteProps) {
     }
 
     const { event_type, client_event_id, metadata } = parsed.data
-    const supabase = createAdminClient()
 
-    // 2. Insert event with ON CONFLICT DO NOTHING (idempotency on session_id, client_event_id)
-    const { error } = await supabase.from('events').insert({
-      session_id: id,
-      business_id: cookie.business_id,
-      campaign_id: cookie.campaign_id,
-      event_type,
-      client_event_id,
-      metadata: metadata as any,
+    // 2. Log the event
+    await logEvent({
+      sessionId: id,
+      eventType: event_type,
+      clientEventId: client_event_id,
+      metadata,
     })
-
-    if (error) {
-      // Postgres unique violation code is 23505
-      if (error.code === '23505') {
-        return NextResponse.json({ success: true, duplicate: true }, { status: 200 })
-      }
-      console.error('Event insert error:', error)
-      return NextResponse.json({ error: 'Failed to record event' }, { status: 500 })
-    }
 
     return NextResponse.json({ success: true }, { status: 201 })
   } catch (error) {
-    console.error('Events API error:', error)
+    console.error('Event logging error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

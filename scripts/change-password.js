@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * PM Zaika Restaurant - Change Admin Password CLI Script
+ * PM Zaika Restaurant - Change Admin Password CLI Script (Firebase)
  *
  * Usage:
  *   node scripts/change-password.js <newPassword> [usernameOrEmail]
@@ -12,7 +12,6 @@
  *   npm run change-password MyNewSecretPass123 invincibleperson9@gmail.com
  */
 
-const { createClient } = require('@supabase/supabase-js')
 const fs = require('fs')
 const path = require('path')
 
@@ -67,58 +66,57 @@ const getEnv = (key) => {
   return match ? match[1].trim() : null
 }
 
-const supabaseUrl = getEnv('NEXT_PUBLIC_SUPABASE_URL')
-const serviceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY')
+const serviceAccountRaw = getEnv('FIREBASE_SERVICE_ACCOUNT_KEY')
 
-if (!supabaseUrl || !serviceRoleKey) {
-  console.error('\n❌ Error: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing in .env.local\n')
+if (!serviceAccountRaw) {
+  console.error('\n❌ Error: FIREBASE_SERVICE_ACCOUNT_KEY missing in .env.local\n')
   process.exit(1)
 }
 
-// 3. Initialize Supabase Admin Client
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-})
+let serviceAccount
+try {
+  serviceAccount = JSON.parse(serviceAccountRaw)
+} catch {
+  try {
+    serviceAccount = JSON.parse(Buffer.from(serviceAccountRaw, 'base64').toString('utf-8'))
+  } catch {
+    console.error('\n❌ Error: FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON or base64.\n')
+    process.exit(1)
+  }
+}
+
+// 3. Initialize Firebase Admin
+const { initializeApp, cert } = require('firebase-admin/app')
+const { getAuth } = require('firebase-admin/auth')
+
+initializeApp({ credential: cert(serviceAccount) })
+const auth = getAuth()
 
 async function run() {
   console.log('\n======================================================')
-  console.log('   PM Zaika Restaurant — Change Password CLI')
+  console.log('   PM Zaika Restaurant — Change Password CLI (Firebase)')
   console.log('======================================================')
   console.log(`Target User: ${targetEmail} (input: "${userInput}")`)
 
-  const { data: usersData, error: listError } = await supabase.auth.admin.listUsers()
-
-  if (listError) {
-    console.error('\n❌ Failed to query Supabase Auth users:', listError.message)
-    process.exit(1)
+  let user
+  try {
+    user = await auth.getUserByEmail(targetEmail)
+  } catch (err) {
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/configuration-not-found') {
+      console.error(`\n❌ User "${targetEmail}" not found.`)
+      console.error('Make sure Firebase Authentication with Email/Password provider is enabled,')
+      console.error('then run: npm run firebase:seed\n')
+      process.exit(1)
+    }
+    throw err
   }
 
-  const user = usersData.users.find(
-    (u) => u.email && u.email.toLowerCase() === targetEmail.toLowerCase()
-  )
-
-  if (!user) {
-    console.error(`\n❌ User with email "${targetEmail}" was not found in Supabase Auth.`)
-    console.log('Existing registered users in this Supabase project:')
-    usersData.users.forEach((u) => console.log(` - ${u.email} (ID: ${u.id})`))
-    console.log('')
-    process.exit(1)
-  }
-
-  const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
-    password: newPassword,
-  })
-
-  if (updateError) {
-    console.error('\n❌ Failed to update password in Supabase:', updateError.message)
-    process.exit(1)
-  }
+  await auth.updateUser(user.uid, { password: newPassword })
 
   console.log('\n✅ SUCCESS: Password updated successfully!')
   console.log('------------------------------------------------------')
   console.log(`User Email : ${user.email}`)
-  console.log(`User ID    : ${user.id}`)
-  console.log(`New Password: ${newPassword}`)
+  console.log(`User ID    : ${user.uid}`)
   console.log('------------------------------------------------------')
   console.log('You can now log in at:')
   console.log('  Local:      http://localhost:3000/login')
@@ -126,4 +124,7 @@ async function run() {
   console.log('  Username:   admin (or ' + user.email + ')\n')
 }
 
-run()
+run().catch((err) => {
+  console.error('\n❌ Failed to update password:', err.message)
+  process.exit(1)
+})

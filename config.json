@@ -1,0 +1,44 @@
+{
+  "name": "Biryani Badshah",
+  "slug": "biryani-badshah-patna",
+  "contact": {
+    "phone": "+919693999890",
+    "helpline": "+919693999890",
+    "email": "contact@biryanibadshah.com"
+  },
+  "location": {
+    "address": "Phulwari Rd, Near Shaheed Bhagat Singh Chowk, Birla Colony, Phulwari Sharif",
+    "city": "Patna",
+    "state": "Bihar",
+    "country": "India"
+  },
+  "google": {
+    "reviewUrl": "https://search.google.com/local/writereview?placeid=ChIJv4XCqyuo8jkRSKhDFGoClDo"
+  },
+  "branding": {
+    "logoUrl": "https://storage.googleapis.com/your-project.appspot.com/branding/logo.png",
+    "faviconUrl": "https://storage.googleapis.com/your-project.appspot.com/branding/favicon.ico",
+    "primaryColor": "#d97706",
+    "secondaryColor": "#1e293b",
+    "accentColor": "#f59e0b"
+  },
+  "features": {
+    "aiReviews": true,
+    "privateFeedback": true,
+    "crm": true,
+    "campaignAnalytics": true,
+    "menuManagement": true,
+    "weeklyReports": false,
+    "customerRecovery": false
+  },
+  "settings": {
+    "defaultLanguage": "en",
+    "supportedLanguages": [
+      "en"
+    ],
+    "timezone": "Asia/Kolkata"
+  },
+  "welcomeMessage": {
+    "en": "Thanks for dining with Biryani Badshah! We'd love to hear about your royal experience today."
+  }
+}

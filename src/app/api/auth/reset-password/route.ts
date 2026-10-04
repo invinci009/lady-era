@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import type { Database } from '@/lib/supabase/types'
-import { resolveZaikaEmail } from '@/lib/auth-helpers'
+import { sendPasswordResetEmail } from 'firebase/auth'
+import { getServerAuth } from '@/lib/firebase/server-auth'
+import { resolveAdminEmail } from '@/lib/auth-helpers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,72 +15,45 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const resolvedEmail = resolveZaikaEmail(username) || username.trim()
+    const resolvedEmail = resolveAdminEmail(username) || username.trim()
 
-    // Determine canonical origin (localhost:3000 in local dev, public domain in production)
-    const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
-    const isLocal = host.includes('localhost') || host.includes('127.0.0.1')
-    const proto = request.headers.get('x-forwarded-proto') || (isLocal ? 'http' : 'https')
+    // Send password reset email via Firebase Auth (server-side client SDK —
+    // never import '@/lib/firebase/client' here, it has 'use client').
+    // actionCodeSettings routes the email link to OUR /reset-password page
+    // (with ?oobCode=...) instead of Firebase's default handler, so the new
+    // password is set inside this app and verified by Firebase's oobCode.
+    // Origin-based URL keeps localhost + production working (both must be
+    // in Auth → Settings → Authorized domains; localhost is by default).
+    const continueUrl = `${request.nextUrl.origin}/reset-password`
+    const auth = getServerAuth()
+    await sendPasswordResetEmail(auth, resolvedEmail, {
+      url: continueUrl,
+      handleCodeInApp: true,
+    })
 
-    const origin = isLocal
-      ? `${proto}://${host}`
-      : (process.env.NEXT_PUBLIC_APP_URL || (host ? `${proto}://${host}` : request.nextUrl.origin) || 'http://localhost:3000').replace(/\/$/, '')
-
-    // Response prepared to capture any PKCE cookies set by supabase
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: `Password reset instructions sent to ${resolvedEmail}. Please check your email inbox (and Spam/Junk folder).`,
     })
+  } catch (error) {
+    console.error('Password reset error:', error)
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    const errorCode = typeof error === 'object' && error !== null && 'code' in error
+      ? (error as { code: unknown }).code
+      : undefined
+    let errorMessage = 'Failed to send reset link.'
 
-    const supabase = createServerClient<Database>(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          getAll: () => request.cookies.getAll(),
-          setAll: (cookiesToSet) => {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, {
-                ...options,
-                path: '/',
-                sameSite: 'lax',
-                secure: process.env.NODE_ENV === 'production',
-              })
-            })
-          },
-        },
-      }
-    )
-
-    // Redirect user to /auth/callback which establishes session and lands on /reset-password
-    const nextPath = encodeURIComponent('/reset-password')
-    const redirectUrl = `${origin}/auth/callback?next=${nextPath}`
-
-    // Dispatch recovery email via Supabase Auth
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(resolvedEmail, {
-      redirectTo: redirectUrl,
-    })
-
-    if (resetError) {
-      let msg = resetError.message || 'Failed to dispatch reset link.'
-      if (msg.toLowerCase().includes('rate limit')) {
-        msg = 'Too many reset attempts in a short time (email rate limit reached). Please wait a few minutes before trying again.'
-      }
-      return NextResponse.json(
-        { error: msg },
-        { status: 429 }
-      )
+    if (errorCode === 'auth/user-not-found') {
+      // Don't reveal if user exists for security
+      return NextResponse.json({
+        success: true,
+        message: 'If an account exists for this email, a reset link has been sent.',
+      })
+    } else if (errorCode === 'auth/too-many-requests') {
+      errorMessage = 'Too many reset attempts. Please wait a few minutes before trying again.'
+      return NextResponse.json({ error: errorMessage }, { status: 429 })
     }
 
-    return response
-  } catch (err: any) {
-    console.error('Password reset error:', err)
-    return NextResponse.json(
-      { error: err?.message || 'Failed to process password reset.' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }

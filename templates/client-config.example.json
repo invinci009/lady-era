@@ -1,0 +1,42 @@
+{
+  "name": "Your Restaurant Name",
+  "slug": "your-restaurant-slug",
+  "contact": {
+    "phone": "+91XXXXXXXXXX",
+    "helpline": "+91XXXXXXXXXX",
+    "email": "contact@yourrestaurant.com"
+  },
+  "location": {
+    "address": "123 Main Street",
+    "city": "Your City",
+    "state": "Your State",
+    "country": "Your Country"
+  },
+  "google": {
+    "reviewUrl": "https://search.google.com/local/writereview?placeid=YOUR_PLACE_ID"
+  },
+  "branding": {
+    "logoUrl": "https://storage.googleapis.com/your-project.appspot.com/branding/logo.png",
+    "faviconUrl": "https://storage.googleapis.com/your-project.appspot.com/branding/favicon.ico",
+    "primaryColor": "#d97706",
+    "secondaryColor": "#1e293b",
+    "accentColor": "#f59e0b"
+  },
+  "features": {
+    "aiReviews": true,
+    "privateFeedback": true,
+    "crm": true,
+    "campaignAnalytics": true,
+    "menuManagement": true,
+    "weeklyReports": false,
+    "customerRecovery": false
+  },
+  "settings": {
+    "defaultLanguage": "en",
+    "supportedLanguages": ["en"],
+    "timezone": "Asia/Kolkata"
+  },
+  "welcomeMessage": {
+    "en": "Thanks for dining with us! We'd love to hear about your experience today."
+  }
+}

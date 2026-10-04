@@ -7,19 +7,25 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Eye, EyeOff, Loader2, LogIn, AlertCircle, CheckCircle2, Utensils, KeyRound, UserCheck, ShieldCheck } from 'lucide-react'
 import ChangePasswordModal from '@/components/auth/ChangePasswordModal'
+import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal'
+import { useClientConfig } from '@/config/client'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false)
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false)
 
+  const { branding, restaurantName } = useClientConfig()
+
+  const [error, setError] = useState<string | null>(null)
+
+  // Parse auth error params after hydration to avoid SSR mismatch.
+  // Server renders null; client fills in via effect.
   useEffect(() => {
-    if (typeof window === 'undefined') return
-
     const searchParams = new URLSearchParams(window.location.search)
     const hashString = window.location.hash.replace(/^#/, '')
     const hashParams = new URLSearchParams(hashString)
@@ -29,11 +35,11 @@ export default function LoginPage() {
     const generalError = searchParams.get('error') || hashParams.get('error')
 
     if (errorCode === 'otp_expired') {
-      setError('The password reset link is invalid or has expired. Please request a new one using "Forgot / Change Password?".')
+      setError('The password reset link is invalid or has expired. Please request a new one.')
     } else if (errorDescription) {
       setError(decodeURIComponent(errorDescription.replace(/\+/g, ' ')))
     } else if (generalError === 'auth_callback_failed') {
-      setError('Authentication callback failed. Please try logging in again or request a new reset link.')
+      setError('Authentication failed. Please try logging in again.')
     }
   }, [])
 
@@ -46,10 +52,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: email.trim(),
-          password,
-        }),
+        body: JSON.stringify({ email: email.trim(), password }),
       })
 
       const data = await res.json()
@@ -60,7 +63,7 @@ export default function LoginPage() {
         return
       }
 
-      // Successful login -> instant navigation to dashboard
+      // Successful login -> navigate to dashboard
       window.location.href = '/dashboard'
     } catch (err: unknown) {
       const rawMsg = err instanceof Error ? err.message : 'Connection error. Please try again.'
@@ -74,15 +77,18 @@ export default function LoginPage() {
       <Card className="border border-slate-800 bg-slate-900/85 backdrop-blur-xl shadow-2xl text-slate-100 rounded-3xl overflow-hidden">
         <CardHeader className="space-y-1.5 pb-3">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-amber-500/20">
+            <div
+              className="w-8 h-8 rounded-xl text-white flex items-center justify-center font-bold text-xs shadow-md"
+              style={{ backgroundColor: branding.primary }}
+            >
               <Utensils className="w-4 h-4" />
             </div>
-            <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-              PM Zaika Restaurant Admin
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: branding.primary }}>
+              {restaurantName} Admin
             </span>
           </div>
           <CardTitle className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <LogIn className="w-5 h-5 text-amber-500" />
+            <LogIn className="w-5 h-5" style={{ color: branding.primary }} />
             Welcome back
           </CardTitle>
           <CardDescription className="text-slate-400 text-xs">
@@ -106,27 +112,28 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="username" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <UserCheck className="w-3.5 h-3.5 text-amber-500" />
-                Username or Email
+              <Label htmlFor="email" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <UserCheck className="w-3.5 h-3.5" style={{ color: branding.primary }} />
+                Email
               </Label>
               <Input
-                id="username"
-                type="text"
-                placeholder="admin or owner@pmzaika.com"
+                id="email"
+                type="email"
+                placeholder="owner@yourrestaurant.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                autoComplete="username"
-                className="bg-slate-950/70 border-slate-800 focus:border-amber-500 text-white placeholder:text-slate-500 h-11 rounded-xl text-sm"
+                autoComplete="email"
+                className="bg-slate-950/70 border-slate-800 text-white placeholder:text-slate-500 h-11 rounded-xl text-sm"
+                style={{ '--tw-ring-color': branding.primary } as React.CSSProperties}
               />
             </div>
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <KeyRound className="w-3.5 h-3.5 text-amber-500" />
+                  <KeyRound className="w-3.5 h-3.5" style={{ color: branding.primary }} />
                   Password
                 </Label>
                 <button
@@ -136,9 +143,10 @@ export default function LoginPage() {
                     setSuccessMessage(null)
                     setIsChangeModalOpen(true)
                   }}
-                  className="text-[11px] text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 transition-colors cursor-pointer group hover:underline"
+                  className="text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer group hover:underline"
+                  style={{ color: branding.primary }}
                 >
-                  <KeyRound className="w-3 h-3 text-amber-400 group-hover:rotate-12 transition-transform" />
+                  <KeyRound className="w-3 h-3 group-hover:rotate-12 transition-transform" />
                   <span>Change Password</span>
                 </button>
               </div>
@@ -152,7 +160,7 @@ export default function LoginPage() {
                   required
                   disabled={loading}
                   autoComplete="current-password"
-                  className="bg-slate-950/70 border-slate-800 focus:border-amber-500 text-white placeholder:text-slate-500 h-11 pr-10 rounded-xl text-sm"
+                  className="bg-slate-950/70 border-slate-800 text-white placeholder:text-slate-500 h-11 pr-10 rounded-xl text-sm"
                 />
                 <button
                   type="button"
@@ -171,7 +179,11 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-amber-600/25 transition-all duration-200 cursor-pointer text-sm active:scale-95 disabled:opacity-50"
+              className="w-full text-white font-bold h-11 rounded-xl shadow-lg transition-all duration-200 cursor-pointer text-sm active:scale-95 disabled:opacity-50"
+              style={{
+                backgroundColor: branding.primary,
+                boxShadow: `0 10px 15px -3px ${branding.primary}40`,
+              }}
             >
               {loading ? (
                 <>
@@ -189,32 +201,37 @@ export default function LoginPage() {
                 onClick={() => {
                   setError(null)
                   setSuccessMessage(null)
-                  setIsChangeModalOpen(true)
+                  setIsForgotModalOpen(true)
                 }}
-                className="hover:text-amber-400 transition-colors cursor-pointer flex items-center gap-1"
+                className="transition-colors cursor-pointer flex items-center gap-1"
+                style={{ color: branding.primary }}
               >
                 <span>Forgot or reset password?</span>
               </button>
             </div>
 
             <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 pt-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-500/70" />
-              <span>PM Zaika Restaurant Admin Portal • Owner Access</span>
+              <ShieldCheck className="w-3.5 h-3.5" style={{ color: branding.primary }} />
+              <span>{restaurantName} Admin Portal • Owner Access</span>
             </div>
           </CardFooter>
         </form>
       </Card>
 
-      {/* Interactive Password Change / Reset Modal */}
       <ChangePasswordModal
         isOpen={isChangeModalOpen}
         onClose={() => setIsChangeModalOpen(false)}
-        initialUsername={email}
-        onPasswordChanged={(newPass, user) => {
+        initialEmail={email}
+        onPasswordChanged={(newPass) => {
           setPassword(newPass)
-          if (user) setEmail(user)
           setSuccessMessage('Password updated successfully! Click "Sign in to Dashboard" with your new credentials.')
         }}
+      />
+
+      <ForgotPasswordModal
+        isOpen={isForgotModalOpen}
+        onClose={() => setIsForgotModalOpen(false)}
+        initialEmail={email}
       />
     </>
   )

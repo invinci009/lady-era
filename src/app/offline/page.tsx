@@ -5,12 +5,12 @@ import { WifiOff, RefreshCw, ArrowLeft, Utensils, Sparkles, Phone } from 'lucide
 import Link from 'next/link'
 
 export default function OfflinePage() {
-  const [isOnline, setIsOnline] = useState(false)
+  const [isOnline, setIsOnline] = useState(
+    () => typeof navigator !== 'undefined' && navigator.onLine
+  )
   const [isRetrying, setIsRetrying] = useState(false)
 
   useEffect(() => {
-    setIsOnline(navigator.onLine)
-
     const handleOnline = () => {
       setIsOnline(true)
       // Auto-reload when connection comes back

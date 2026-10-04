@@ -8,10 +8,11 @@ import {
   QrCode,
   Menu,
 } from 'lucide-react'
+import type { TabType } from './DashboardWorkspace'
 
 interface MobileBottomNavProps {
   activeTab: string
-  onSelectTab: (tab: any) => void
+  onSelectTab: (tab: TabType) => void
   phoneCount?: number
   responsesCount?: number
   hasFeedback?: boolean

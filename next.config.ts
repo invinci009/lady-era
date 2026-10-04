@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // FAT32/removable drives don't support symlinks — skip symlink resolution
+  webpack: (config) => {
+    config.resolve.symlinks = false;
+    return config;
+  },
   async headers() {
     return [
       {

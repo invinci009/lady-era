@@ -1,6 +1,17 @@
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import OnboardingWizard from '@/components/dashboard/OnboardingWizard'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { validateSession } from '@/lib/firebase/auth'
+import {
+  getRestaurantSettings,
+  getCampaigns,
+  getEvents,
+  getSession,
+  getSessionAnswers,
+  getReviewDraft,
+  getPrivateFeedback,
+  getMenuItems,
+} from '@/lib/firebase/firestore'
+import { getRestaurantConfig } from '@/config/loader'
 import DashboardWorkspace from '@/components/dashboard/DashboardWorkspace'
 import type { AnalyticsData } from '@/components/dashboard/OverviewTab'
 import type { ResponseItem } from '@/components/dashboard/ResponsesTab'
@@ -16,146 +27,129 @@ export const revalidate = 0
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { tab } = await searchParams
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
-  const admin = createAdminClient()
+  // 1. Authenticate via Firebase token
+  const cookieStore = await cookies()
+  const idToken = cookieStore.get('firebase_token')?.value
 
-  // 1. Fetch restaurant owned by user, or fall back to primary business
-  let businessQuery = admin
-    .from('businesses')
-    .select('id, name, location, phone, secondary_phone, primary_color, welcome_message, google_review_url')
-
-  if (user) {
-    businessQuery = businessQuery.eq('owner_id', user.id)
+  if (!idToken) {
+    redirect('/login')
   }
 
-  const { data: userBusiness } = await businessQuery.limit(1).maybeSingle()
-  let business = userBusiness
-
-  if (!business) {
-    const { data: defaultBusiness } = await admin
-      .from('businesses')
-      .select('id, name, location, phone, secondary_phone, primary_color, welcome_message, google_review_url')
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle()
-
-    business = defaultBusiness
+  const user = await validateSession(idToken)
+  if (!user) {
+    redirect('/login')
   }
 
-  // If owner has no business yet, show guided onboarding
-  if (!business) {
-    return <OnboardingWizard />
+  // 2-4, 8-9. Fetch independent collections in parallel. These were
+  // sequential awaits — each one cost a full Firestore round-trip, so page
+  // load grew linearly with every query. Results are identical, just concurrent.
+  const [settingsResult, campaigns, events, privateFeedbackData, menuItems] = await Promise.all([
+    getRestaurantSettings(),
+    getCampaigns(),
+    getEvents({ limit: 10000 }),
+    getPrivateFeedback(),
+    getMenuItems(),
+  ])
+  const config = getRestaurantConfig()
+
+  let settings = settingsResult
+
+  if (!settings) {
+    settings = {
+      id: 'settings',
+      name: config.name,
+      slug: config.slug,
+      contact: config.contact,
+      location: config.location,
+      google: config.google,
+      branding: config.branding,
+      features: config.features,
+      settings: config.settings,
+      welcomeMessage: config.welcomeMessage,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
   }
 
-  // 2. Fetch campaigns
-  const { data: campaigns } = await admin
-    .from('campaigns')
-    .select('id, name, slug, active, created_at')
-    .eq('business_id', business.id)
-    .order('created_at', { ascending: false })
+  // 3. (merged into the Promise.all above)
+  // 4. (merged into the Promise.all above)
 
-  // 3. Fetch all events for this business
-  const { data: events } = await admin
-    .from('events')
-    .select('session_id, campaign_id, event_type')
-    .eq('business_id', business.id)
+  // 5. Fetch sessions for all event sessionIds — in parallel, not one-by-one
+  const sessionIds = [...new Set(events.map((e) => e.sessionId).filter(Boolean))] as string[]
+  const sessionDocs = await Promise.all(sessionIds.map((sessionId) => getSession(sessionId)))
+  const sessions: Array<{ id: string; campaignId: string; status: string; createdAt: string; completedAt: string | null }> = []
 
-  // 4. Fetch all sessions for this business
-  const { data: sessions } = await admin
-    .from('sessions')
-    .select('id, campaign_id, status, created_at, completed_at')
-    .eq('business_id', business.id)
-    .order('created_at', { ascending: false })
-
-  // 5. Fetch all answers for this business's sessions
-  const sessionIds = (sessions || []).map((s) => s.id)
-  let answers: Array<{ session_id: string; question_key: string; value: any }> = []
-  let drafts: Array<{ session_id: string; original_text: string | null; final_text: string | null }> = []
-
-  if (sessionIds.length > 0) {
-    const { data: answersData } = await admin
-      .from('answers')
-      .select('session_id, question_key, value')
-      .in('session_id', sessionIds)
-
-    answers = answersData || []
-
-    const { data: draftsData } = await admin
-      .from('review_drafts')
-      .select('session_id, original_text, final_text')
-      .in('session_id', sessionIds)
-
-    drafts = draftsData || []
+  for (const session of sessionDocs) {
+    if (session) {
+      sessions.push({
+        id: session.id,
+        campaignId: session.campaignId,
+        status: session.status,
+        createdAt: session.createdAt,
+        completedAt: session.completedAt,
+      })
+    }
   }
 
-  // 6. Fetch private feedback
-  const { data: privateFeedbackData } = await admin
-    .from('private_feedback')
-    .select('id, session_id, category, message, contact_name, contact_value, contact_consent, created_at')
-    .eq('business_id', business.id)
-    .order('created_at', { ascending: false })
+  // 6-7. Fetch answers + drafts for all sessions in parallel
+  const [answersList, draftsList] = await Promise.all([
+    Promise.all(sessions.map((session) => getSessionAnswers(session.id))),
+    Promise.all(sessions.map((session) => getReviewDraft(session.id))),
+  ])
 
-  // 7. Fetch menu items
-  const { data: menuItems } = await admin
-    .from('menu_items')
-    .select('id, name, active, position')
-    .eq('business_id', business.id)
-    .order('position', { ascending: true })
+  // 6. Index answers by session
+  const answersBySession = new Map<string, Map<string, unknown>>()
+  for (let i = 0; i < sessions.length; i++) {
+    const answerMap = new Map<string, unknown>()
+    for (const a of answersList[i]) {
+      answerMap.set(a.questionKey, a.value)
+    }
+    answersBySession.set(sessions[i].id, answerMap)
+  }
 
-  // Map menu item ID -> name
+  // 7. Index review drafts by session
+  const draftsBySession = new Map<string, { originalText: string; finalText: string }>()
+  for (let i = 0; i < sessions.length; i++) {
+    const draft = draftsList[i]
+    if (draft) {
+      draftsBySession.set(sessions[i].id, {
+        originalText: draft.originalText,
+        finalText: draft.finalText,
+      })
+    }
+  }
+
+  // 8. Private feedback + 9. menu items already fetched above in parallel
   const menuItemMap = new Map<string, string>()
-  for (const m of (menuItems || [])) {
-    const rawName = m.name as any
-    const dishName =
-      typeof rawName === 'string'
-        ? rawName
-        : rawName?.en || (typeof rawName === 'object' && rawName !== null ? Object.values(rawName)[0] : 'Menu item')
-    menuItemMap.set(m.id, String(dishName))
+  for (const m of menuItems) {
+    const name = typeof m.name === 'string' ? m.name : m.name?.en || 'Menu item'
+    menuItemMap.set(m.id, name)
   }
 
   // ========================================================
   // COMPUTE METRICS
   // ========================================================
-  const allEvents = events || []
-  const allSessions = sessions || []
-  const completedSessions = allSessions.filter((s) => s.status === 'completed')
+  const completedSessions = sessions.filter((s) => s.status === 'completed')
 
-  // 1. Scans
-  const scans = allEvents.filter((e) => e.event_type === 'QR_SCANNED').length
-  // 2. Starts
-  const starts = allEvents.filter((e) => e.event_type === 'QUIZ_STARTED').length
-  // 3. Completions
+  const scans = events.filter((e) => e.eventType === 'QR_SCANNED').length
+  const starts = events.filter((e) => e.eventType === 'QUIZ_STARTED').length
   const completions = completedSessions.length
 
-  // Rates
   const startRate = scans > 0 ? starts / scans : 0
   const completionRate = starts > 0 ? completions / starts : 0
   const scanToCompletionRate = scans > 0 ? completions / scans : 0
 
-  // Google Clicks
   const googleClickSessions = new Set(
-    allEvents.filter((e) => e.event_type === 'GOOGLE_CLICKED').map((e) => e.session_id)
+    events.filter((e) => e.eventType === 'GOOGLE_CLICKED').map((e) => e.sessionId)
   )
   const googleClicks = googleClickSessions.size
   const googleClickRate = completions > 0 ? googleClicks / completions : 0
 
-  // Private feedback
-  const privateFeedbackCount = privateFeedbackData?.length || 0
+  const privateFeedbackCount = privateFeedbackData.length
   const privateFeedbackRate = completions > 0 ? privateFeedbackCount / completions : 0
 
   // Ratings calculation
-  const answersBySession = new Map<string, Map<string, any>>()
-  for (const a of answers) {
-    if (!answersBySession.has(a.session_id)) {
-      answersBySession.set(a.session_id, new Map())
-    }
-    answersBySession.get(a.session_id)!.set(a.question_key, a.value)
-  }
-
   let overallSum = 0
   let foodSum = 0
   let serviceSum = 0
@@ -192,7 +186,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       }
       if (Array.isArray(liked)) {
         for (const l of liked) {
-          likedCounts[l] = (likedCounts[l] || 0) + 1
+          likedCounts[l as string] = (likedCounts[l as string] || 0) + 1
         }
       }
     }
@@ -209,14 +203,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   // Campaign stats table
-  const campaignMap = new Map((campaigns || []).map((c) => [c.id, c]))
-  const campaignStats = (campaigns || []).map((c) => {
-    const cScans = allEvents.filter((e) => e.campaign_id === c.id && e.event_type === 'QR_SCANNED').length
-    const cCompletions = completedSessions.filter((s) => s.campaign_id === c.id).length
+  const campaignMap = new Map(campaigns.map((c) => [c.id, c]))
+  const campaignStats = campaigns.map((c) => {
+    const cScans = events.filter((e) => e.campaignId === c.id && e.eventType === 'QR_SCANNED').length
+    const cCompletions = completedSessions.filter((s) => s.campaignId === c.id).length
     const cGoogleClicks = new Set(
-      allEvents
-        .filter((e) => e.campaign_id === c.id && e.event_type === 'GOOGLE_CLICKED')
-        .map((e) => e.session_id)
+      events
+        .filter((e) => e.campaignId === c.id && e.eventType === 'GOOGLE_CLICKED')
+        .map((e) => e.sessionId)
     ).size
 
     return {
@@ -251,23 +245,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     campaignStats,
   }
 
-  // Map drafts
-  const draftsBySession = new Map(drafts.map((d) => [d.session_id, d]))
-
   // Map responses
   const responses: ResponseItem[] = completedSessions.map((s) => {
     const sAnswers = answersBySession.get(s.id)
     const draft = draftsBySession.get(s.id)
-    const cName = campaignMap.get(s.campaign_id)?.name || 'Dining Hall'
+    const cName = campaignMap.get(s.campaignId)?.name || 'Dining Hall'
 
     const contactObj = sAnswers?.get('customer_contact')
-    const phoneVal =
-      sAnswers?.get('customer_phone') ||
-      (typeof contactObj === 'object' ? contactObj?.phone : null) ||
+    const phoneVal: string | null =
+      (typeof sAnswers?.get('customer_phone') === 'string' ? (sAnswers.get('customer_phone') as string) : null) ||
+      (typeof contactObj === 'object' && contactObj !== null && typeof (contactObj as Record<string, unknown>)?.phone === 'string' ? ((contactObj as Record<string, unknown>).phone as string) : null) ||
       null
-    const nameVal =
-      sAnswers?.get('customer_name') ||
-      (typeof contactObj === 'object' ? contactObj?.name : null) ||
+    const nameVal: string | null =
+      (typeof sAnswers?.get('customer_name') === 'string' ? (sAnswers.get('customer_name') as string) : null) ||
+      (typeof contactObj === 'object' && contactObj !== null && typeof (contactObj as Record<string, unknown>)?.name === 'string' ? ((contactObj as Record<string, unknown>).name as string) : null) ||
       null
 
     const rawOrdered = sAnswers?.get('ordered') || []
@@ -279,14 +270,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       id: s.id,
       campaignName: cName,
       status: s.status,
-      completedAt: s.completed_at,
-      overallRating: sAnswers?.get('overall_rating') ?? null,
-      foodRating: sAnswers?.get('food_rating') ?? null,
-      serviceRating: sAnswers?.get('service_rating') ?? null,
-      liked: sAnswers?.get('liked') ?? [],
+      completedAt: s.completedAt,
+      overallRating: typeof sAnswers?.get('overall_rating') === 'number' ? (sAnswers.get('overall_rating') as number) : null,
+      foodRating: typeof sAnswers?.get('food_rating') === 'number' ? (sAnswers.get('food_rating') as number) : null,
+      serviceRating: typeof sAnswers?.get('service_rating') === 'number' ? (sAnswers.get('service_rating') as number) : null,
+      liked: Array.isArray(sAnswers?.get('liked')) ? (sAnswers.get('liked') as string[]) : [],
       ordered: orderedDishNames,
-      draftText: draft?.final_text || draft?.original_text || null,
-      draftEdited: Boolean(draft?.final_text && draft.final_text !== draft.original_text),
+      draftText: draft?.finalText || draft?.originalText || null,
+      draftEdited: Boolean(draft?.finalText && draft.finalText !== draft.originalText),
       customerName: nameVal,
       customerPhone: phoneVal,
     }
@@ -296,85 +287,94 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const customerDetails: CustomerDetail[] = completedSessions.map((s) => {
     const sAnswers = answersBySession.get(s.id)
     const draft = draftsBySession.get(s.id)
-    const cName = campaignMap.get(s.campaign_id)?.name || 'Dining Hall'
+    const cName = campaignMap.get(s.campaignId)?.name || 'Dining Hall'
 
     const contactObj = sAnswers?.get('customer_contact')
-    const pf = (privateFeedbackData || []).find((f) => (f as any).session_id === s.id)
+    const pf = privateFeedbackData.find((f) => f.sessionId === s.id)
 
-    const phoneVal =
-      sAnswers?.get('customer_phone') ||
-      (typeof contactObj === 'object' ? contactObj?.phone : null) ||
-      pf?.contact_value ||
+    const phoneVal: string =
+      (typeof sAnswers?.get('customer_phone') === 'string' ? (sAnswers.get('customer_phone') as string) : '') ||
+      (typeof contactObj === 'object' && contactObj !== null && typeof (contactObj as Record<string, unknown>)?.phone === 'string' ? ((contactObj as Record<string, unknown>).phone as string) : '') ||
+      pf?.contactValue ||
       ''
 
-    const nameVal =
-      sAnswers?.get('customer_name') ||
-      (typeof contactObj === 'object' ? contactObj?.name : null) ||
-      pf?.contact_name ||
+    const nameVal: string =
+      (typeof sAnswers?.get('customer_name') === 'string' ? (sAnswers.get('customer_name') as string) : '') ||
+      (typeof contactObj === 'object' && contactObj !== null && typeof (contactObj as Record<string, unknown>)?.name === 'string' ? ((contactObj as Record<string, unknown>).name as string) : '') ||
+      pf?.contactName ||
       ''
 
-    const optIn = typeof contactObj === 'object' ? Boolean(contactObj?.optIn ?? true) : false
+    const optIn = typeof contactObj === 'object' && contactObj !== null ? Boolean((contactObj as Record<string, unknown>)?.optIn ?? true) : false
 
     const rawOrdered = sAnswers?.get('ordered') || []
     const orderedDishNames = Array.isArray(rawOrdered)
       ? rawOrdered.map((idOrName: string) => menuItemMap.get(idOrName) || idOrName)
       : []
 
-    const googleClicked = allEvents.some(
-      (e) => e.session_id === s.id && e.event_type === 'GOOGLE_CLICKED'
+    const googleClicked = events.some(
+      (e) => e.sessionId === s.id && e.eventType === 'GOOGLE_CLICKED'
     )
 
     return {
       sessionId: s.id,
-      name: nameVal,
-      phone: phoneVal,
+      name: nameVal || '',
+      phone: phoneVal || '',
       hasPhone: Boolean(phoneVal),
       optInMarketing: optIn,
-      overallRating: sAnswers?.get('overall_rating') ?? null,
-      foodRating: sAnswers?.get('food_rating') ?? null,
-      serviceRating: sAnswers?.get('service_rating') ?? null,
+      overallRating: typeof sAnswers?.get('overall_rating') === 'number' ? (sAnswers.get('overall_rating') as number) : null,
+      foodRating: typeof sAnswers?.get('food_rating') === 'number' ? (sAnswers.get('food_rating') as number) : null,
+      serviceRating: typeof sAnswers?.get('service_rating') === 'number' ? (sAnswers.get('service_rating') as number) : null,
       orderedDishes: orderedDishNames,
-      likedAspects: sAnswers?.get('liked') || [],
-      draftText: draft?.final_text || draft?.original_text || null,
+      likedAspects: Array.isArray(sAnswers?.get('liked')) ? (sAnswers.get('liked') as string[]) : [],
+      draftText: draft?.finalText || draft?.originalText || null,
       googleClicked,
       campaignName: cName,
-      respondedAt: s.completed_at || s.created_at,
+      respondedAt: s.completedAt || s.createdAt,
       privateFeedbackMessage: pf?.message || null,
       status: s.status,
     }
   })
 
   // Map private feedback
-  const feedbackList: PrivateFeedbackItem[] = (privateFeedbackData || []).map((f) => ({
+  const feedbackList: PrivateFeedbackItem[] = privateFeedbackData.map((f) => ({
     id: f.id,
     category: f.category,
     message: f.message,
-    contactName: f.contact_name,
-    contactValue: f.contact_value,
-    contactConsent: Boolean(f.contact_consent),
-    createdAt: f.created_at,
+    contactName: f.contactName || null,
+    contactValue: f.contactValue || null,
+    contactConsent: f.contactConsent,
+    createdAt: f.createdAt,
+  }))
+
+  // Map campaigns to CampaignItem format (with created_at for backward compat)
+  const campaignItems = campaigns.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    active: c.active,
+    created_at: c.createdAt,
   }))
 
   return (
     <DashboardWorkspace
       initialTab={tab}
       business={{
-        id: business.id,
-        name: business.name,
-        location: business.location,
-        phone: (business as any).phone || '7488260572',
-        secondaryPhone: (business as any).secondary_phone || '06123112128, 9525748843',
-        googleReviewUrl: business.google_review_url,
-        welcomeMessage: business.welcome_message,
-        primaryColor: business.primary_color,
+        id: settings.id,
+        name: settings.name,
+        location: settings.location?.address || '',
+        phone: settings.contact?.phone || '',
+        secondaryPhone: settings.contact?.helpline || '',
+        googleReviewUrl: settings.google.reviewUrl,
+        welcomeMessage: settings.welcomeMessage,
+        primaryColor: settings.branding.primaryColor,
       }}
-      campaigns={campaigns || []}
+      campaigns={campaignItems}
       analytics={analytics}
       responses={responses}
       customers={customerDetails}
       feedbackList={feedbackList}
-      menuItems={menuItems || []}
-      userEmail={user?.email || 'admin'}
+      menuItems={menuItems}
+      userEmail={user.email || 'admin'}
     />
   )
 }

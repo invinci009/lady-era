@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { getSession, saveAnswer, logEvent } from '@/lib/firebase/firestore'
 import { getSessionFromCookie } from '@/lib/session/cookie'
 import {
   overallRatingSchema,
@@ -15,7 +15,7 @@ interface RouteProps {
   params: Promise<{ id: string; question_key: string }>
 }
 
-function validateAnswer(key: string, body: any) {
+function validateAnswer(key: string, body: unknown) {
   switch (key) {
     case 'overall_rating':
       return overallRatingSchema.safeParse(body)
@@ -32,7 +32,6 @@ function validateAnswer(key: string, body: any) {
     case 'return_intent':
       return returnIntentSchema.safeParse(body)
     default:
-      // Custom questions accept primitive string or number or array
       return { success: true, data: body } as const
   }
 }
@@ -51,19 +50,13 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
     const validation = validateAnswer(question_key, body)
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Invalid answer value', details: (validation as any).error.flatten() },
+        { error: 'Invalid answer value', details: !validation.success ? validation.error.flatten() : undefined },
         { status: 400 }
       )
     }
 
-    const supabase = createAdminClient()
-
     // 2. Verify session exists and is not completed
-    const { data: session } = await supabase
-      .from('sessions')
-      .select('id, business_id, status')
-      .eq('id', id)
-      .single()
+    const session = await getSession(id)
 
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
@@ -76,63 +69,24 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
       )
     }
 
-    // 3. Find question_id for this business and key
-    let { data: question } = await supabase
-      .from('questions')
-      .select('id')
-      .eq('business_id', session.business_id)
-      .eq('key', question_key)
-      .single()
+    // 3. Save answer (unwrap { value } payloads, pass through raw values otherwise)
+    const rawData: unknown = validation.data
+    const answerValue =
+      typeof rawData === 'object' && rawData !== null && 'value' in rawData
+        ? (rawData as { value: unknown }).value ?? rawData
+        : rawData
 
-    // If question not found (e.g. default questions not seeded yet), seed or find
-    if (!question) {
-      const { data: newQ } = await supabase
-        .from('questions')
-        .insert({
-          business_id: session.business_id,
-          key: question_key,
-          type: question_key.includes('rating') ? 'rating' : 'text',
-          text: { en: question_key },
-          position: 1,
-        })
-        .select('id')
-        .single()
-      question = newQ
-    }
+    await saveAnswer({
+      sessionId: id,
+      questionKey: question_key,
+      value: answerValue,
+    })
 
-    if (!question) {
-      return NextResponse.json({ error: 'Question not found' }, { status: 404 })
-    }
-
-    // 4. Upsert answer
-    const answerValue = validation.data.value !== undefined ? validation.data.value : validation.data
-
-    const { error: answerError } = await supabase.from('answers').upsert(
-      {
-        session_id: id,
-        question_id: question.id,
-        question_key,
-        value: answerValue,
-      },
-      { onConflict: 'session_id,question_id' }
-    )
-
-    if (answerError) {
-      console.error('Answer upsert error:', answerError)
-      return NextResponse.json({ error: 'Failed to record answer' }, { status: 500 })
-    }
-
-    // 5. Update last activity timestamp on session
-    await supabase
-      .from('sessions')
-      .update({ last_activity_at: new Date().toISOString() })
-      .eq('id', id)
-
-    // 6. Record QUESTION_ANSWERED event
-    await supabase.from('events').insert({
-      session_id: id,
-      business_id: session.business_id,
-      event_type: 'QUESTION_ANSWERED',
+    // 4. Record QUESTION_ANSWERED event (session activity is tracked via events)
+    await logEvent({
+      sessionId: id,
+      campaignId: session.campaignId,
+      eventType: 'QUESTION_ANSWERED',
       metadata: { question_key, value: answerValue },
     })
 

@@ -8,7 +8,7 @@ import { Utensils, Plus, Trash2, CheckCircle2, XCircle, Loader2 } from 'lucide-r
 
 export interface MenuItem {
   id: string
-  name: any
+  name: Record<string, string> | string
   active: boolean | null
   position: number | null
 }

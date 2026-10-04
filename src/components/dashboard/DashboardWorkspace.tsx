@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import OverviewTab from './OverviewTab'
+import OverviewTab, { type AnalyticsData } from './OverviewTab'
 import CampaignsTab, { type CampaignItem } from './CampaignsTab'
-import ResponsesTab from './ResponsesTab'
-import FeedbackTab from './FeedbackTab'
-import MenuTab from './MenuTab'
-import SettingsTab from './SettingsTab'
+import ResponsesTab, { type ResponseItem } from './ResponsesTab'
+import FeedbackTab, { type PrivateFeedbackItem } from './FeedbackTab'
+import MenuTab, { type MenuItem as DashboardMenuItem } from './MenuTab'
+import SettingsTab, { type BusinessSettings } from './SettingsTab'
 import CustomersPortalTab, { type CustomerDetail } from './CustomersPortalTab'
 import MobileBottomNav from './MobileBottomNav'
 import MobileMenuDrawer from './MobileMenuDrawer'
@@ -29,17 +29,19 @@ import Link from 'next/link'
 
 interface DashboardWorkspaceProps {
   initialTab?: string
-  business: any
-  analytics: any
+  business: BusinessSettings
+  analytics: AnalyticsData
   campaigns: CampaignItem[]
-  responses: any[]
-  feedbackList: any[]
-  menuItems: any[]
+  responses: ResponseItem[]
+  feedbackList: PrivateFeedbackItem[]
+  menuItems: DashboardMenuItem[]
   customers?: CustomerDetail[]
   userEmail?: string
 }
 
 type TabType = 'overview' | 'customers' | 'responses' | 'campaigns' | 'feedback' | 'menu' | 'settings'
+
+export type { TabType }
 
 const VALID_TABS: TabType[] = ['overview', 'customers', 'responses', 'campaigns', 'feedback', 'menu', 'settings']
 
@@ -65,11 +67,14 @@ export default function DashboardWorkspace({
   )
   const [isMoreDrawerOpen, setIsMoreDrawerOpen] = useState(false)
 
-  useEffect(() => {
+  // Sync active tab when the URL-driven initial tab changes (derived state)
+  const [prevInitialTab, setPrevInitialTab] = useState(initialTab)
+  if (initialTab !== prevInitialTab) {
+    setPrevInitialTab(initialTab)
     if (initialTab && VALID_TABS.includes(initialTab as TabType)) {
       setActiveTab(initialTab as TabType)
     }
-  }, [initialTab])
+  }
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab)
@@ -239,7 +244,7 @@ export default function DashboardWorkspace({
         feedbackCount={feedbackList.length}
         menuItemsCount={menuItems.length}
         restaurantName={business.name}
-        restaurantLocation={business.location}
+        restaurantLocation={business.location || undefined}
       />
     </div>
   )

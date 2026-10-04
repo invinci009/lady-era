@@ -9,18 +9,20 @@ interface OfflineBannerProps {
 }
 
 export default function OfflineBanner({ hasSyncError = false, onRetry }: OfflineBannerProps) {
+  // Default to online for SSR consistency — server renders null, so the
+  // first client render must also be null. Real status syncs post-hydration.
   const [isOffline, setIsOffline] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+    setIsOffline(!navigator.onLine)
+
     const handleOnline = () => setIsOffline(false)
     const handleOffline = () => setIsOffline(true)
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
-
-    if (!navigator.onLine) {
-      setIsOffline(true)
-    }
 
     return () => {
       window.removeEventListener('online', handleOnline)
@@ -28,6 +30,7 @@ export default function OfflineBanner({ hasSyncError = false, onRetry }: Offline
     }
   }, [])
 
+  if (!mounted) return null
   if (!isOffline && !hasSyncError) return null
 
   return (

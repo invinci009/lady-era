@@ -27,7 +27,7 @@ export interface BusinessSettings {
   phone?: string | null
   secondaryPhone?: string | null
   googleReviewUrl: string | null
-  welcomeMessage: any
+  welcomeMessage: Record<string, string> | null
   primaryColor: string | null
 }
 
@@ -40,7 +40,7 @@ interface SettingsTabProps {
 export default function SettingsTab({
   business,
   onRefresh,
-  userEmail = 'invincibleperson9@gmail.com',
+  userEmail = 'admin',
 }: SettingsTabProps) {
   // Navigation section toggle
   const [activeSection, setActiveSection] = useState<'profile' | 'security'>('profile')
@@ -48,8 +48,8 @@ export default function SettingsTab({
   // Restaurant Profile state
   const [name, setName] = useState(business.name)
   const [location, setLocation] = useState(business.location || '')
-  const [phone, setPhone] = useState(business.phone || '7488260572')
-  const [secondaryPhone, setSecondaryPhone] = useState(business.secondaryPhone || '06123112128, 9525748843')
+  const [phone, setPhone] = useState(business.phone || '')
+  const [secondaryPhone, setSecondaryPhone] = useState(business.secondaryPhone || '')
   const [googleUrl, setGoogleUrl] = useState(business.googleReviewUrl || '')
   const [welcomeText, setWelcomeText] = useState(
     (typeof business.welcomeMessage === 'object' && business.welcomeMessage?.en) ||

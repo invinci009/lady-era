@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+import { validateSession } from '@/lib/firebase/auth'
 
 export default async function HomePage({
   searchParams,
@@ -7,13 +8,16 @@ export default async function HomePage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const params = await searchParams
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
-  if (user) {
-    redirect('/dashboard')
+  // Check for Firebase auth token
+  const cookieStore = await cookies()
+  const idToken = cookieStore.get('firebase_token')?.value
+
+  if (idToken) {
+    const user = await validateSession(idToken)
+    if (user) {
+      redirect('/dashboard')
+    }
   }
 
   const query = new URLSearchParams()

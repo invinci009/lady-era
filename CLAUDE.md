@@ -1,4 +1,13 @@
-<!-- GSD:project-start source:PROJECT.md -->
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+
 ## Project
 
 **ReviewPulse**
@@ -7,64 +16,62 @@ ReviewPulse is a QR-based customer feedback platform for restaurants. Customers 
 
 **Core Value:** Turn every restaurant visit into (a) structured experience data the owner can act on and (b) an easy, authentic path to leave a public Google review — without steering, incentivizing, or filtering by rating.
 
+### Architecture
+
+- **Backend:** Firebase (Firestore, Auth, Storage, Cloud Functions)
+- **Frontend:** Next.js 16 + React 19 + Tailwind CSS 4 + shadcn/ui
+- **Auth:** Firebase Auth (email/password) + custom session cookies
+- **AI:** Anthropic API (server-side) with deterministic fallback
+- **Rate Limiting:** Upstash Redis + `@upstash/ratelimit`
+- **Bot Filter:** `isbot` package
+- **Deployment:** Single-client-per-deployment (white-label template)
+
 ### Constraints
 
-- **Tech stack (fixed):** Next.js (App Router) + React + TypeScript + Tailwind CSS + shadcn/ui (Radix) + Supabase (Postgres, Auth, Storage, RLS) — no separate backend
+- **Tech stack (fixed):** Next.js (App Router) + React + TypeScript + Tailwind CSS + shadcn/ui (Radix) + Firebase (Firestore, Auth, Storage, Cloud Functions)
 - **Styling:** Tailwind CSS + shadcn/ui with Radix primitives for accessibility
-- **DB access:** `@supabase/supabase-js` + `@supabase/ssr`, generated types from Supabase CLI, no ORM
+- **DB access:** Firebase Admin SDK (server-side), Firebase Client SDK (client-side)
 - **Validation:** Zod (shared client/server schemas)
-- **Session:** `jose` for signed `rp_session` cookie
+- **Session:** `jose` for signed `rp_session` cookie + Firebase ID token cookie
 - **Bot filter:** `isbot` package
-- **LLM:** Anthropic SDK behind `DraftGenerator` interface, `claude-haiku-4-5` default (swappable via config)
+- **LLM:** Anthropic API behind `DraftGenerator` interface, `claude-haiku-4-5` default (swappable via config)
 - **QR:** `qrcode` npm package, server-side PNG/SVG
-- **i18n (P1):** `next-intl` + Noto Sans Devanagari
-- **Charts:** Recharts (dashboard only, not in customer bundle)
 - **Rate limiting:** Upstash Redis + `@upstash/ratelimit`
-- **Testing:** Vitest (unit), Playwright + axe-core (E2E + a11y), Supabase CLI/pgTAP (RLS), Lighthouse CI
-- **Observability:** Sentry + structured logs
-- **CI/CD:** GitHub Actions, Supabase CLI migrations
-- **Hosting:** Vercel Pro ($20/mo) + Supabase Pro ($25/mo) — no free tier for production (QR can't point to paused DB)
-- **Budget:** ~$45/mo baseline hosting + ~$0.0015/draft LLM cost
-- **Performance:** < 2s landing load, server components, minimal client JS, inlined critical CSS
-- **Security:** RLS everywhere, service-role key for customer writes, signed cookies, rate limiting
-<!-- GSD:project-end -->
+- **Testing:** Vitest (unit), Playwright + axe-core (E2E + a11y)
+- **Observability:** Structured logs
+- **CI/CD:** GitHub Actions, Firebase CLI
+- **Hosting:** Vercel / Firebase Hosting
 
-<!-- GSD:stack-start source:STACK.md -->
-## Technology Stack
+### White-Label Template
 
-Technology stack not yet documented. Will populate after codebase mapping or first phase.
-<!-- GSD:stack-end -->
+This repository is a **master template** for single-client-per-deployment. Each restaurant gets:
 
-<!-- GSD:conventions-start source:CONVENTIONS.md -->
+- Its own Firebase project
+- Its own Firestore database
+- Its own Firebase Authentication
+- Its own Firebase Storage
+- Its own environment configuration
+- Its own deployment
+
+The configuration system is in `src/config/`:
+- `schema.ts` — Zod-validated config schema
+- `loader.ts` — Centralized config loader
+- `branding.ts` — Branding token resolver
+- `features.ts` — Feature flag resolver
+
+Client-specific configuration goes in `config.json` (see `templates/client-config.example.json`).
+
+### Key Breaking Changes (Next.js 16)
+
+- `middleware.ts` → `proxy.ts` (function renamed to `proxy`)
+- Route handlers use Web Request/Response APIs
+- Environment variables loaded from `.env*` files
+
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
-<!-- GSD:conventions-end -->
-
-<!-- GSD:architecture-start source:ARCHITECTURE.md -->
-## Architecture
-
-Architecture not yet mapped. Follow existing patterns found in the codebase.
-<!-- GSD:architecture-end -->
-
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
-
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
-
-Use these entry points:
-- `/gsd:quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd:debug` for investigation and bug fixing
-- `/gsd:execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
-
-
-
-<!-- GSD:profile-start -->
-## Developer Profile
-
-> Profile not yet configured. Run `/gsd:profile-user` to generate your developer profile.
-> This section is managed by `generate-claude-profile` -- do not edit manually.
-<!-- GSD:profile-end -->
+- All restaurant-specific values come from `config.json` via `getRestaurantConfig()`
+- Never hardcode restaurant names, colors, phone numbers, or URLs in components
+- Use `getBrandingTokens()` for dynamic theming
+- Use `getFeatureFlags()` for feature-gating
+- Firebase Admin SDK is server-only (use `import 'server-only'`)
+- Firebase Client SDK is client-only (use `'use client'`)

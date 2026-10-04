@@ -29,17 +29,31 @@ const DISMISS_KEY = 'rp_pwa_prompt_dismissed_until'
 export function PwaProvider({ children }: { children: React.ReactNode }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isInstallable, setIsInstallable] = useState(false)
-  const [isInstalled, setIsInstalled] = useState(false)
-  const [isIOS, setIsIOS] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as unknown as { standalone?: boolean }).standalone === true)
+  )
+  const [isIOS, setIsIOS] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()) &&
+      !(window as unknown as { MSStream?: unknown }).MSStream
+  )
   const [isOnline, setIsOnline] = useState(true)
+
+  // Sync real online status after hydration to avoid SSR mismatch.
+  // Server always renders online (true); client corrects in effect.
   const [showInstallModal, setShowInstallModal] = useState(false)
 
   // 1. Register Service Worker & check standalone mode
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    // Set online status
+    // Sync initial online status post-hydration
     setIsOnline(navigator.onLine)
+
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
     window.addEventListener('online', handleOnline)
@@ -47,16 +61,13 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
 
     // Detect iOS
     const userAgent = window.navigator.userAgent.toLowerCase()
-    const isIosDevice = /iphone|ipad|ipod/.test(userAgent) && !(window as any).MSStream
-    setIsIOS(isIosDevice)
+    const isIosDevice = /iphone|ipad|ipod/.test(userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream
 
     // Check if running in standalone display mode (installed)
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true ||
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true ||
       document.referrer.includes('android-app://')
-
-    setIsInstalled(isStandalone)
 
     // Register service worker if supported
     if ('serviceWorker' in navigator) {

@@ -41,3 +41,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+.firebaserc
+
+# client configuration (contains restaurant-specific data)
+# Uncomment the next line if you want to exclude client configs from the template repo
+# config.json
+
+# OS files
+Thumbs.db
+ehthumbs.db

@@ -1,0 +1,43 @@
+rules_version = '2';
+// ==============================================================================
+// ReviewPulse — Firebase Storage Security Rules
+// ==============================================================================
+// Single-restaurant deployment model.
+// Public can read branding assets. Only authenticated admins can write.
+// ==============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ==============================================================================
+    // Branding Assets (public read)
+    // ==============================================================================
+    match /branding/{allPaths=**} {
+      allow read: if true; // Public can read branding
+      allow write: if request.auth != null; // Admin only
+    }
+
+    // ==============================================================================
+    // QR Assets (public read)
+    // ==============================================================================
+    match /qr/{allPaths=**} {
+      allow read: if true; // Public can read QR codes
+      allow write: if request.auth != null; // Admin only
+    }
+
+    // ==============================================================================
+    // Menu Images (public read)
+    // ==============================================================================
+    match /menu/{allPaths=**} {
+      allow read: if true; // Public can read menu images
+      allow write: if request.auth != null; // Admin only
+    }
+
+    // ==============================================================================
+    // Default Deny
+    // ==============================================================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

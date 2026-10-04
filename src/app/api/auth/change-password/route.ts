@@ -1,127 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
-import type { Database } from '@/lib/supabase/types'
-import { resolveZaikaEmail } from '@/lib/auth-helpers'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { getServerAuth } from '@/lib/firebase/server-auth'
+import { getAdminAuth } from '@/lib/firebase/admin'
+import { z } from 'zod'
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8).max(100),
+})
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}))
-    const { username, currentPassword, newPassword } = body
+    const parsed = changePasswordSchema.safeParse(body)
 
-    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'New password must be at least 8 characters long.' },
+        { error: 'Invalid password data. New password must be at least 8 characters.' },
         { status: 400 }
       )
     }
 
-    if (currentPassword && currentPassword === newPassword) {
-      return NextResponse.json(
-        { error: 'New password must be different from your current password.' },
-        { status: 400 }
-      )
+    const { currentPassword, newPassword } = parsed.data
+
+    // Identify the caller from the session cookie (there is no
+    // `auth.currentUser` on the server — never import the client SDK here).
+    const idToken = request.cookies.get('firebase_token')?.value
+    if (!idToken) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    const admin = createAdminClient()
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-    // Determine target account email
-    let targetEmail: string | null = null
-
-    // 1. Resolve alias or custom username if provided
-    if (username && typeof username === 'string') {
-      targetEmail = resolveZaikaEmail(username)
+    let uid: string
+    let email: string | undefined
+    try {
+      const decoded = await getAdminAuth().verifyIdToken(idToken)
+      uid = decoded.uid
+      email = decoded.email
+    } catch {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    // 2. Check active authenticated session if no explicit username provided
-    const serverSupabase = await createClient()
-    const {
-      data: { user: sessionUser },
-    } = await serverSupabase.auth.getUser()
-
-    if (!targetEmail && sessionUser?.email) {
-      targetEmail = sessionUser.email
+    if (!email) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    if (!targetEmail) {
-      return NextResponse.json(
-        { error: 'Username or email is required to identify the account.' },
-        { status: 400 }
-      )
+    // Verify the current password by signing in with it
+    try {
+      await signInWithEmailAndPassword(getServerAuth(), email, currentPassword)
+    } catch {
+      return NextResponse.json({ error: 'Current password is incorrect.' }, { status: 400 })
     }
 
-    if (!currentPassword) {
-      return NextResponse.json(
-        { error: 'Current password is required to verify identity.' },
-        { status: 400 }
-      )
+    // Update password via Admin SDK
+    await getAdminAuth().updateUser(uid, { password: newPassword })
+
+    return NextResponse.json({ success: true, message: 'Password updated successfully' })
+  } catch (error) {
+    console.error('Change password error:', error)
+
+    const errorCode = typeof error === 'object' && error !== null && 'code' in error
+      ? (error as { code: unknown }).code
+      : undefined
+    let errorMessage = 'Failed to update password.'
+
+    if (errorCode === 'auth/weak-password') {
+      errorMessage = 'New password is too weak. Use at least 8 characters.'
+    } else if (errorCode === 'auth/requires-recent-login') {
+      errorMessage = 'Please log in again before changing your password.'
     }
 
-    // 3. Verify current password by signing in
-    const response = NextResponse.json({
-      success: true,
-      message: 'Password updated successfully!',
-    })
-
-    const verifyClient = createServerClient<Database>(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          getAll: () => request.cookies.getAll(),
-          setAll: (cookiesToSet) => {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, {
-                ...options,
-                path: '/',
-                sameSite: 'lax',
-                secure: process.env.NODE_ENV === 'production',
-              })
-            })
-          },
-        },
-      }
-    )
-
-    const { data: signInData, error: signInError } = await verifyClient.auth.signInWithPassword({
-      email: targetEmail,
-      password: String(currentPassword),
-    })
-
-    if (signInError || !signInData.user) {
-      return NextResponse.json(
-        {
-          error:
-            'Current password is incorrect. Please verify your credentials and try again.',
-        },
-        { status: 401 }
-      )
-    }
-
-    // 4. Update the password using admin client for authoritative update
-    const { error: updateError } = await admin.auth.admin.updateUserById(
-      signInData.user.id,
-      {
-        password: newPassword,
-      }
-    )
-
-    if (updateError) {
-      return NextResponse.json(
-        { error: updateError.message || 'Failed to update password.' },
-        { status: 500 }
-      )
-    }
-
-    return response
-  } catch (err: any) {
-    console.error('Password change error:', err)
-    return NextResponse.json(
-      { error: err?.message || 'Server error while updating password.' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: errorMessage }, { status: 400 })
   }
 }

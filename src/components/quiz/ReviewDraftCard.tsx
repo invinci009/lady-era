@@ -25,26 +25,33 @@ export default function ReviewDraftCard({
 }: ReviewDraftCardProps) {
   const [draft, setDraft] = useState(initialDraftText)
   const [isLoadingDraft, setIsLoadingDraft] = useState(!initialDraftText)
+  const [isRegenerating, setIsRegenerating] = useState(false)
   const [hasCopied, setHasCopied] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  const pickDraftText = (data: unknown): string | null => {
+    if (!data || typeof data !== 'object') return null
+    const d = data as Record<string, unknown>
+    // Server returns camelCase; accept snake_case too
+    const text = d.finalText ?? d.final_text ?? d.originalText ?? d.original_text
+    return typeof text === 'string' && text.trim() ? text : null
+  }
+
   // Fetch draft from API if not pre-populated
   useEffect(() => {
     if (!draft && sessionId) {
-      setIsLoadingDraft(true)
       fetch(`/api/public/sessions/${sessionId}/draft`, {
         method: 'POST',
         credentials: 'same-origin',
       })
         .then((res) => res.json())
         .then((data) => {
-          if (data?.final_text || data?.original_text) {
-            setDraft(data.final_text || data.original_text)
-          } else {
-            setDraft(`Had a wonderful dining experience at ${restaurantName || 'PM Zaika Restaurant'} today! The food was flavorful and freshly prepared, and the service was warm and attentive. Highly recommended!`)
-          }
+          setDraft(
+            pickDraftText(data) ??
+              `Had a wonderful dining experience at ${restaurantName || 'PM Zaika Restaurant'} today! The food was flavorful and freshly prepared, and the service was warm and attentive. Highly recommended!`
+          )
         })
         .catch((err) => {
           console.warn('Draft load error:', err)
@@ -53,6 +60,34 @@ export default function ReviewDraftCard({
         .finally(() => setIsLoadingDraft(false))
     }
   }, [sessionId, draft])
+
+  // Regenerate a fresh unique draft via Groq
+  const handleRegenerate = async () => {
+    if (!sessionId || isRegenerating) return
+    setIsRegenerating(true)
+    try {
+      const res = await fetch(`/api/public/sessions/${sessionId}/draft?refresh=1`, {
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+      const data = await res.json()
+      const text = pickDraftText(data)
+      if (text) {
+        setDraft(text)
+        setToastMessage('Fresh review generated!')
+        setTimeout(() => setToastMessage(null), 2500)
+      } else {
+        setToastMessage('Could not regenerate right now. Try again.')
+        setTimeout(() => setToastMessage(null), 2500)
+      }
+    } catch (e) {
+      console.warn('Draft regenerate error:', e)
+      setToastMessage('Connection error. Please try again.')
+      setTimeout(() => setToastMessage(null), 2500)
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
 
   // Save changes with 1s debounce
   const handleDraftChange = (newText: string) => {
@@ -147,7 +182,23 @@ export default function ReviewDraftCard({
             <div className="space-y-1.5">
               <label htmlFor="review-draft-text" className="text-xs font-semibold text-stone-700 flex items-center justify-between">
                 <span>Review Draft</span>
-                <span className="text-[11px] text-amber-800 font-medium">Tap text to edit freely</span>
+                <span className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRegenerate}
+                    disabled={isLoadingDraft || isRegenerating}
+                    className="text-[11px] text-amber-800 font-semibold inline-flex items-center gap-1 hover:text-amber-900 disabled:opacity-50 cursor-pointer transition-colors"
+                    title="Generate a fresh unique review"
+                  >
+                    {isRegenerating ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <RotateCcw className="w-3 h-3" />
+                    )}
+                    <span>{isRegenerating ? 'Writing…' : 'Regenerate'}</span>
+                  </button>
+                  <span className="text-[11px] text-amber-800 font-medium">Tap text to edit freely</span>
+                </span>
               </label>
               <textarea
                 id="review-draft-text"

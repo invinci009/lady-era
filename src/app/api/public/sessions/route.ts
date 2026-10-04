@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { getCampaignBySlug, getCampaigns, createSession, logEvent } from '@/lib/firebase/firestore'
+import { getRestaurantConfig } from '@/config/loader'
 import { getSessionFromCookie, setSessionCookie } from '@/lib/session/cookie'
 import { hashIp, hashUserAgent } from '@/lib/utils/hash'
 import { slugSchema } from '@/lib/validation/schemas'
@@ -22,30 +23,16 @@ export async function POST(request: NextRequest) {
     }
 
     const { slug } = parsed.data
-    const supabase = createAdminClient()
+    const config = getRestaurantConfig()
 
-    // 1. Look up campaign & business
-    let { data: campaign, error: campaignError } = await supabase
-      .from('campaigns')
-      .select('id, active, business_id, businesses(id, name, logo_url, primary_color, welcome_message, google_review_url)')
-      .eq('slug', slug)
-      .maybeSingle()
+    let campaign = await getCampaignBySlug(slug)
 
     if (!campaign) {
-      const { data: fallbackCampaign } = await supabase
-        .from('campaigns')
-        .select('id, active, business_id, businesses(id, name, logo_url, primary_color, welcome_message, google_review_url)')
-        .eq('active', true)
-        .limit(1)
-        .maybeSingle()
-
-      if (fallbackCampaign) {
-        campaign = fallbackCampaign
-        campaignError = null
-      }
+      const campaigns = await getCampaigns()
+      campaign = campaigns.find(c => c.active) || null
     }
 
-    if (campaignError || !campaign) {
+    if (!campaign) {
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
 
@@ -53,91 +40,63 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Campaign is inactive' }, { status: 410 })
     }
 
-    const business = campaign.businesses as {
-      id: string
-      name: string
-      logo_url: string | null
-      primary_color: string | null
-      welcome_message: any
-      google_review_url: string | null
-    }
-
-    // 2. Check for existing active session from cookie
     const existingCookie = await getSessionFromCookie()
     if (existingCookie && existingCookie.campaign_id === campaign.id) {
-      const { data: existingSession } = await supabase
-        .from('sessions')
-        .select('id, status')
-        .eq('id', existingCookie.session_id)
-        .single()
+      const { getSession } = await import('@/lib/firebase/firestore')
+      const existingSession = await getSession(existingCookie.session_id)
 
       if (existingSession && existingSession.status !== 'completed') {
         return NextResponse.json(
           {
             session_id: existingSession.id,
-            business_name: business.name,
-            logo_url: business.logo_url,
-            primary_color: business.primary_color,
-            welcome_message: business.welcome_message,
-            google_review_url_exists: Boolean(business.google_review_url),
+            business_name: config.name,
+            logo_url: config.branding.logoUrl || undefined,
+            primary_color: config.branding.primaryColor,
+            welcome_message: config.welcomeMessage,
+            google_review_url_exists: Boolean(config.google.reviewUrl),
           },
           { status: 200 }
         )
       }
     }
 
-    // 3. Extract and hash client metadata
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip')
     const ua = request.headers.get('user-agent')
 
-    // 4. Create new session
-    const { data: newSession, error: sessionError } = await supabase
-      .from('sessions')
-      .insert({
-        campaign_id: campaign.id,
-        business_id: campaign.business_id,
-        status: 'landed',
-        ip_hash: hashIp(ip),
-        ua_hash: hashUserAgent(ua),
-      })
-      .select('id')
-      .single()
+    const newSession = await createSession({
+      campaignId: campaign.id,
+      language: config.settings.defaultLanguage,
+      ipHash: hashIp(ip) || undefined,
+      uaHash: hashUserAgent(ua) || undefined,
+    })
 
-    if (sessionError || !newSession) {
-      return NextResponse.json({ error: 'Failed to create session' }, { status: 500 })
-    }
-
-    // 5. Set signed session cookie
     await setSessionCookie({
       session_id: newSession.id,
       campaign_id: campaign.id,
-      business_id: campaign.business_id,
+      business_id: 'default',
     })
 
-    // 6. Log QR_SCANNED and LANDING_VIEWED events
-    await supabase.from('events').insert([
-      {
-        session_id: newSession.id,
-        business_id: campaign.business_id,
-        event_type: 'QR_SCANNED',
-        metadata: { slug },
-      },
-      {
-        session_id: newSession.id,
-        business_id: campaign.business_id,
-        event_type: 'LANDING_VIEWED',
-        metadata: {},
-      },
-    ])
+    await logEvent({
+      sessionId: newSession.id,
+      campaignId: campaign.id,
+      eventType: 'QR_SCANNED',
+      metadata: { slug },
+    })
+    await logEvent({
+      sessionId: newSession.id,
+      campaignId: campaign.id,
+      eventType: 'LANDING_VIEWED',
+      metadata: {},
+    })
 
     return NextResponse.json(
       {
         session_id: newSession.id,
-        business_name: business.name,
-        logo_url: business.logo_url,
-        primary_color: business.primary_color,
-        welcome_message: business.welcome_message,
-        google_review_url_exists: Boolean(business.google_review_url),
+        business_name: config.name,
+        logo_url: config.branding.logoUrl,
+        primary_color: config.branding.primaryColor,
+        welcome_message: config.welcomeMessage,
+        google_review_url_exists: Boolean(config.google.reviewUrl),
       },
       { status: 201 }
     )

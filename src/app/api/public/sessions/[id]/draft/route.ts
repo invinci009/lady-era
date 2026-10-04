@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { getSession, getSessionAnswers, getMenuItems, getReviewDraft, saveReviewDraft, replaceReviewDraft, updateReviewDraft, logEvent } from '@/lib/firebase/firestore'
 import { getSessionFromCookie } from '@/lib/session/cookie'
 import { buildFactSheet } from '@/lib/draft/fact-sheet'
 import { generateReviewDraft } from '@/lib/draft/generator'
-import { logEvent } from '@/lib/observability/logger'
+import { getRestaurantConfig } from '@/config/loader'
+import { logEvent as logObservabilityEvent } from '@/lib/observability/logger'
 import { z } from 'zod'
 
 interface RouteProps {
@@ -18,14 +19,10 @@ export async function POST(request: NextRequest, { params }: RouteProps) {
   const startTime = Date.now()
   try {
     const { id } = await params
-    const supabase = createAdminClient()
+    const config = getRestaurantConfig()
 
-    // 1. Fetch session and business info
-    const { data: session } = await supabase
-      .from('sessions')
-      .select('id, business_id, status, businesses(name)')
-      .eq('id', id)
-      .maybeSingle()
+    // 1. Fetch session
+    const session = await getSession(id)
 
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
@@ -37,82 +34,77 @@ export async function POST(request: NextRequest, { params }: RouteProps) {
       console.warn(`[Draft] Cookie mismatch for session ${id}`)
     }
 
-    // 3. Idempotency: Return existing draft if already generated
-    const { data: existingDraft } = await supabase
-      .from('review_drafts')
-      .select('original_text, final_text, method')
-      .eq('session_id', id)
-      .maybeSingle()
+    // 3. Idempotency: Return existing draft if already generated —
+    // unless ?refresh=1 forces a fresh Groq generation (regenerate button)
+    const { searchParams } = new URL(request.url)
+    const forceRefresh = searchParams.get('refresh') === '1'
+    const existingDraft = await getReviewDraft(id)
 
-    if (existingDraft && existingDraft.original_text) {
+    if (existingDraft && existingDraft.originalText && !forceRefresh) {
       return NextResponse.json(existingDraft, { status: 200 })
     }
 
     // 4. Retrieve answers and menu items to build Fact Sheet
-    const { data: answers } = await supabase
-      .from('answers')
-      .select('question_key, value')
-      .eq('session_id', id)
-
-    const { data: menuItems } = await supabase
-      .from('menu_items')
-      .select('id, name')
-      .eq('business_id', session.business_id)
+    const answers = await getSessionAnswers(id)
+    const menuItems = await getMenuItems()
 
     const menuItemNames: Record<string, string> = {}
-    if (menuItems) {
-      for (const item of menuItems) {
-        const name = typeof item.name === 'string' ? item.name : (item.name as any)?.en || 'Specialty dish'
-        menuItemNames[item.id] = name
-      }
+    for (const item of menuItems) {
+      const name = typeof item.name === 'string' ? item.name : item.name?.en || 'Specialty dish'
+      menuItemNames[item.id] = name
     }
 
-    const factSheet = buildFactSheet(answers || [], menuItemNames)
-    const restaurantName = (session.businesses as any)?.name || 'PM Zaika Restaurant'
+    const factSheet = buildFactSheet(
+      answers.map(a => ({ question_key: a.questionKey, value: a.value })),
+      menuItemNames
+    )
 
     // 5. Generate review draft
-    const generated = await generateReviewDraft(factSheet, id, restaurantName)
+    const generated = await generateReviewDraft(factSheet, id, config.name)
 
-    // 6. Upsert into review_drafts
-    const { data: newDraft, error: insertError } = await supabase
-      .from('review_drafts')
-      .upsert(
-        {
-          session_id: id,
-          original_text: generated.text,
-          final_text: generated.text,
-          method: generated.method,
-        },
-        { onConflict: 'session_id' }
-      )
-      .select('original_text, final_text, method')
-      .maybeSingle()
-
-    if (insertError) {
-      console.error('Draft upsert error:', insertError)
-      return NextResponse.json({ error: 'Failed to record review draft' }, { status: 500 })
+    // 6. Save to reviewDrafts (replace on refresh, create otherwise)
+    let newDraft
+    if (forceRefresh && existingDraft) {
+      await replaceReviewDraft(existingDraft.id, {
+        originalText: generated.text,
+        finalText: generated.text,
+        method: generated.method,
+      })
+      newDraft = {
+        ...existingDraft,
+        originalText: generated.text,
+        finalText: generated.text,
+        method: generated.method,
+      }
+    } else {
+      newDraft = await saveReviewDraft({
+        sessionId: id,
+        originalText: generated.text,
+        finalText: generated.text,
+        method: generated.method,
+      })
     }
 
     // 7. Fire DRAFT_GENERATED event
-    await supabase.from('events').insert({
-      session_id: id,
-      business_id: session.business_id,
-      event_type: 'DRAFT_GENERATED',
+    await logEvent({
+      sessionId: id,
+      campaignId: session.campaignId,
+      eventType: forceRefresh ? 'DRAFT_REGENERATED' : 'DRAFT_GENERATED',
       metadata: { method: generated.method },
     })
 
-    logEvent({
+    logObservabilityEvent({
       sessionId: id,
-      businessId: session.business_id,
+      businessId: 'default',
       action: 'DRAFT_GENERATED',
       latencyMs: Date.now() - startTime,
       metadata: { method: generated.method, length: generated.text.length },
     })
 
-    return NextResponse.json(newDraft || { original_text: generated.text, final_text: generated.text, method: generated.method }, { status: 200 })
+    return NextResponse.json(newDraft, { status: 200 })
   } catch (error) {
     console.error('Draft API error:', error)
-    logEvent({
+    logObservabilityEvent({
       level: 'error',
       action: 'DRAFT_GENERATION_FAILED',
       latencyMs: Date.now() - startTime,
@@ -127,6 +119,7 @@ export async function PATCH(request: NextRequest, { params }: RouteProps) {
     const { id } = await params
     const body = await request.json().catch(() => ({}))
     const parsed = patchDraftSchema.safeParse(body)
+
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Invalid draft update payload', details: parsed.error.flatten() },
@@ -135,24 +128,11 @@ export async function PATCH(request: NextRequest, { params }: RouteProps) {
     }
 
     const { final_text } = parsed.data
-    const supabase = createAdminClient()
 
     // Update final_text
-    const { data: updated, error } = await supabase
-      .from('review_drafts')
-      .update({
-        final_text,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('session_id', id)
-      .select('final_text')
-      .maybeSingle()
+    await updateReviewDraft(id, final_text)
 
-    if (error) {
-      return NextResponse.json({ error: 'Failed to update review draft' }, { status: 500 })
-    }
-
-    return NextResponse.json({ success: true, final_text: updated?.final_text || final_text }, { status: 200 })
+    return NextResponse.json({ success: true, final_text }, { status: 200 })
   } catch (error) {
     console.error('Draft update error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

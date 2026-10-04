@@ -4,7 +4,7 @@ import { UtensilsCrossed, Check, Plus, Sparkles } from 'lucide-react'
 
 export interface MenuItemData {
   id: string
-  name: any
+  name: Record<string, string> | string
 }
 
 interface OrderedItemsQuestionProps {

@@ -14,6 +14,7 @@ import ComplimentsQuestion from './questions/ComplimentsQuestion'
 import OrderedItemsQuestion, { type MenuItemData } from './questions/OrderedItemsQuestion'
 import ContactInfoQuestion, { type ContactInfoValue } from './questions/ContactInfoQuestion'
 import { trackClientEvent } from '@/lib/client/telemetry'
+import { useClientConfig } from '@/config/client'
 import { Clock, ShieldCheck, ArrowRight, Utensils, Loader2, Star, MapPin, Sparkles, MessageCircle, Phone, Copy, Check } from 'lucide-react'
 
 interface QuizFlowProps {
@@ -25,12 +26,14 @@ interface QuizFlowProps {
   googleReviewUrl?: string | null
   initialSessionId?: string | null
   initialStatus?: string | null
-  initialAnswers?: Record<string, any>
+  initialAnswers?: Record<string, QuizAnswerValue>
   initialDraftText?: string | null
   menuItems: MenuItemData[]
 }
 
 type QuestionKey = 'overall_rating' | 'food_rating' | 'service_rating' | 'liked' | 'ordered' | 'customer_contact'
+
+export type QuizAnswerValue = number | string | string[] | ContactInfoValue | Record<string, unknown> | null
 
 export default function QuizFlow({
   slug,
@@ -54,13 +57,15 @@ export default function QuizFlow({
 
   const [isPrivateFeedbackOpen, setIsPrivateFeedbackOpen] = useState(false)
   const [hasSyncError, setHasSyncError] = useState(false)
-  const [pendingSync, setPendingSync] = useState<{ key: string; value: any } | null>(null)
+  const [pendingSync, setPendingSync] = useState<{ key: string; value: QuizAnswerValue } | null>(null)
   const [phoneCopied, setPhoneCopied] = useState(false)
+
+  const { helplinePhone } = useClientConfig()
 
   const handleCopyPhone = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText('7488260572')
+    if (navigator.clipboard && helplinePhone) {
+      navigator.clipboard.writeText(helplinePhone)
       setPhoneCopied(true)
       setTimeout(() => setPhoneCopied(false), 2500)
     }
@@ -88,7 +93,7 @@ export default function QuizFlow({
   }
 
   const [stepIndex, setStepIndex] = useState(getInitialStepIndex())
-  const [answers, setAnswers] = useState<Record<string, any>>({
+  const [answers, setAnswers] = useState<Record<string, QuizAnswerValue>>({
     overall_rating: initialAnswers.overall_rating ?? null,
     food_rating: initialAnswers.food_rating ?? null,
     service_rating: initialAnswers.service_rating ?? null,
@@ -105,7 +110,7 @@ export default function QuizFlow({
   const [isStarting, setIsStarting] = useState(false)
 
   // Save an individual answer via API
-  const persistAnswer = async (sId: string, key: string, value: any) => {
+  const persistAnswer = async (sId: string, key: string, value: QuizAnswerValue) => {
     try {
       const res = await fetch(`/api/public/sessions/${sId}/answers/${key}`, {
         method: 'PUT',
@@ -170,15 +175,15 @@ export default function QuizFlow({
   }
 
   // Set an answer for a question with auto-save
-  const handleSetAnswer = (key: QuestionKey, value: any, autoAdvance = false) => {
+  const handleSetAnswer = (key: QuestionKey, value: QuizAnswerValue, autoAdvance = false) => {
     setAnswers((prev) => ({ ...prev, [key]: value }))
 
     if (sessionId) {
       persistAnswer(sessionId, key, value)
       // When saving customer_contact, also denormalize phone and name for direct queries
-      if (key === 'customer_contact' && typeof value === 'object' && value !== null) {
-        if (value.phone) persistAnswer(sessionId, 'customer_phone', value.phone)
-        if (value.name) persistAnswer(sessionId, 'customer_name', value.name)
+      if (key === 'customer_contact' && typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        if (typeof value.phone === 'string' && value.phone) persistAnswer(sessionId, 'customer_phone', value.phone)
+        if (typeof value.name === 'string' && value.name) persistAnswer(sessionId, 'customer_name', value.name)
       }
     }
 
@@ -221,10 +226,12 @@ export default function QuizFlow({
 
     try {
       const contact = answers.customer_contact
+      const contactObj =
+        typeof contact === 'object' && contact !== null && !Array.isArray(contact) ? contact : null
       const answersToSubmit = {
         ...answers,
-        customer_phone: contact?.phone || '',
-        customer_name: contact?.name || '',
+        customer_phone: (contactObj && typeof contactObj.phone === 'string' ? contactObj.phone : '') || '',
+        customer_name: (contactObj && typeof contactObj.name === 'string' ? contactObj.name : '') || '',
       }
 
       const res = await fetch(`/api/public/sessions/${sessionId}/submit`, {
@@ -508,28 +515,28 @@ export default function QuizFlow({
             <div className="relative z-10">
               {currentKey === 'overall_rating' && (
                 <StarRatingQuestion
-                  value={answers.overall_rating}
+                  value={answers.overall_rating as number | null}
                   onChange={(val) => handleSetAnswer('overall_rating', val, true)}
                 />
               )}
 
               {currentKey === 'food_rating' && (
                 <EmojiRatingQuestion
-                  value={answers.food_rating}
+                  value={answers.food_rating as number | null}
                   onChange={(val) => handleSetAnswer('food_rating', val, true)}
                 />
               )}
 
               {currentKey === 'service_rating' && (
                 <ServiceRatingQuestion
-                  value={answers.service_rating}
+                  value={answers.service_rating as number | null}
                   onChange={(val) => handleSetAnswer('service_rating', val, true)}
                 />
               )}
 
               {currentKey === 'liked' && (
                 <ComplimentsQuestion
-                  value={answers.liked || []}
+                  value={(answers.liked as string[] | null) || []}
                   onChange={(val) => handleSetAnswer('liked', val, false)}
                 />
               )}
@@ -537,7 +544,7 @@ export default function QuizFlow({
               {currentKey === 'ordered' && (
                 <OrderedItemsQuestion
                   menuItems={menuItems}
-                  value={answers.ordered || []}
+                  value={(answers.ordered as string[] | null) || []}
                   onChange={(val) => handleSetAnswer('ordered', val, false)}
                 />
               )}
@@ -545,7 +552,7 @@ export default function QuizFlow({
               {currentKey === 'customer_contact' && (
                 <ContactInfoQuestion
                   value={
-                    answers.customer_contact || {
+                    (answers.customer_contact as ContactInfoValue) || {
                       name: '',
                       phone: '',
                       optIn: true,

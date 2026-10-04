@@ -4,20 +4,25 @@ import './globals.css'
 import { PwaProvider } from '@/components/pwa/PwaProvider'
 import PwaInstallPrompt from '@/components/pwa/PwaInstallPrompt'
 import OfflineIndicator from '@/components/pwa/OfflineIndicator'
+import { generateBrandingCSS } from '@/config/branding'
+import { getRestaurantConfig } from '@/config/loader'
+import { ClientConfigProvider } from '@/config/client'
 
 const inter = Inter({ subsets: ['latin'] })
 
+const config = getRestaurantConfig()
+
 export const metadata: Metadata = {
   title: {
-    default: 'ReviewPulse — Restaurant Feedback & Authentic Reviews',
-    template: '%s | ReviewPulse',
+    default: `${config.name} — Restaurant Feedback & Authentic Reviews`,
+    template: `%s | ${config.name}`,
   },
-  description: 'QR-based customer feedback platform for PM Zaika Restaurant with AI-assisted review drafting',
-  applicationName: 'PM Zaika Feedback',
+  description: `QR-based customer feedback platform for ${config.name} with AI-assisted review drafting`,
+  applicationName: `${config.name} Feedback`,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'PM Zaika',
+    title: config.name,
   },
   formatDetection: {
     telephone: false,
@@ -43,8 +48,8 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: dark)', color: '#020617' },
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: config.branding.primaryColor },
+    { media: '(prefers-color-scheme: light)', color: config.branding.primaryColor },
   ],
 }
 
@@ -55,15 +60,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="ReviewPulse" />
+        <meta name="apple-mobile-web-app-title" content={config.name} />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <style dangerouslySetInnerHTML={{ __html: generateBrandingCSS(config) }} />
       </head>
-      <body className={`${inter.className} min-h-screen min-h-[100dvh] bg-slate-950 text-slate-100 antialiased overflow-x-hidden selection:bg-amber-500 selection:text-white`}>
-        <PwaProvider>
-          <OfflineIndicator />
-          {children}
-          <PwaInstallPrompt />
-        </PwaProvider>
+      <body className={`${inter.className} min-h-screen min-h-[100dvh] bg-slate-950 text-slate-100 antialiased overflow-x-hidden`}>
+        <ClientConfigProvider config={config}>
+          <PwaProvider>
+            <OfflineIndicator />
+            {children}
+            <PwaInstallPrompt />
+          </PwaProvider>
+        </ClientConfigProvider>
       </body>
     </html>
   )

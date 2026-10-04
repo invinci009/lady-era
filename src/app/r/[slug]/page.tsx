@@ -1,7 +1,8 @@
-import { createAdminClient } from '@/lib/supabase/admin'
-import QuizFlow from '@/components/quiz/QuizFlow'
+import QuizFlow, { type QuizAnswerValue } from '@/components/quiz/QuizFlow'
 import { Sparkles, AlertTriangle } from 'lucide-react'
 import { cookies } from 'next/headers'
+import { getRestaurantConfig } from '@/config/loader'
+import { getCampaignBySlug, getMenuItems, getSession, getSessionAnswers, getReviewDraft } from '@/lib/firebase/firestore'
 
 interface PublicQuizPageProps {
   params: Promise<{ slug: string }>
@@ -11,27 +12,15 @@ interface PublicQuizPageProps {
 export default async function PublicQuizPage({ params, searchParams }: PublicQuizPageProps) {
   const { slug } = await params
   const { new: forceNew } = await searchParams
-  const supabase = createAdminClient()
+  const config = getRestaurantConfig()
 
   // 1. Look up campaign by slug
-  let { data: campaign } = await supabase
-    .from('campaigns')
-    .select('id, active, slug, business_id, google_review_url_override, businesses(id, name, logo_url, primary_color, welcome_message, google_review_url)')
-    .eq('slug', slug)
-    .maybeSingle()
+  let campaign = await getCampaignBySlug(slug)
 
-  // Graceful fallback: If this slug was deleted or user enters custom slug, resolve to the active PM Zaika Restaurant campaign
+  // Graceful fallback: If this slug was deleted or user enters custom slug, resolve to the active campaign
   if (!campaign) {
-    const { data: fallbackCampaign } = await supabase
-      .from('campaigns')
-      .select('id, active, slug, business_id, google_review_url_override, businesses(id, name, logo_url, primary_color, welcome_message, google_review_url)')
-      .eq('active', true)
-      .limit(1)
-      .maybeSingle()
-
-    if (fallbackCampaign) {
-      campaign = fallbackCampaign
-    }
+    const campaigns = await import('@/lib/firebase/firestore').then(m => m.getCampaigns())
+    campaign = campaigns.find(c => c.active) || null
   }
 
   // Fallback screen if no campaign exists at all
@@ -44,16 +33,18 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
           </div>
           <h1 className="text-xl font-bold text-stone-900">QR Code Not Found</h1>
           <p className="text-sm text-stone-500">
-            This QR code is not valid or has been removed. Please ask your server at PM Zaika Restaurant for assistance.
+            This QR code is not valid or has been removed. Please ask your server at {config.name} for assistance.
           </p>
-          <div className="pt-2">
-            <a
-              href="tel:7488260572"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-900 hover:bg-amber-100 transition-colors"
-            >
-              📞 Call: +91 7488260572
-            </a>
-          </div>
+          {config.contact.phone && (
+            <div className="pt-2">
+              <a
+                href={`tel:${config.contact.phone}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-900 hover:bg-amber-100 transition-colors"
+              >
+                Call: {config.contact.phone}
+              </a>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -69,91 +60,61 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
           </div>
           <h1 className="text-xl font-bold text-stone-900">Survey Temporarily Inactive</h1>
           <p className="text-sm text-stone-500">
-            This feedback code is currently paused by PM Zaika Restaurant. Please check with your server.
+            This feedback code is currently paused by {config.name}. Please check with your server.
           </p>
-          <div className="pt-2">
-            <a
-              href="tel:7488260572"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-900 hover:bg-amber-100 transition-colors"
-            >
-              📞 Call: +91 7488260572
-            </a>
-          </div>
+          {config.contact.phone && (
+            <div className="pt-2">
+              <a
+                href={`tel:${config.contact.phone}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-900 hover:bg-amber-100 transition-colors"
+              >
+                Call: {config.contact.phone}
+              </a>
+            </div>
+          )}
         </div>
       </div>
     )
   }
 
-  const business = campaign.businesses as {
-    id: string
-    name: string
-    logo_url: string | null
-    primary_color: string | null
-    welcome_message: Record<string, string> | null
-    google_review_url: string | null
-  } | null
-
-  const googleReviewUrl = campaign.google_review_url_override || business?.google_review_url
+  const googleReviewUrl = campaign.googleReviewUrlOverride || config.google.reviewUrl
 
   // 2. Fetch menu items for the ordered items step
-  const { data: menuItems } = await supabase
-    .from('menu_items')
-    .select('id, name')
-    .eq('business_id', campaign.business_id)
-    .eq('active', true)
-    .order('position')
+  const menuItems = await getMenuItems()
 
   // 3. Resume existing session if cookie is present and ?new=1 is NOT passed
   let existingSessionId: string | null = null
   let existingStatus: string | null = null
-  let existingAnswers: Record<string, any> = {}
+  const existingAnswers: Record<string, unknown> = {}
   let existingDraftText: string | null = null
 
   if (forceNew !== '1') {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get(`session_${slug}`)
+    const sessionCookie = cookieStore.get('rp_session')
     if (sessionCookie?.value) {
-      const { data: session } = await supabase
-        .from('sessions')
-        .select('id, status')
-        .eq('id', sessionCookie.value)
-        .eq('campaign_id', campaign.id)
-        .maybeSingle()
+      const session = await getSession(sessionCookie.value)
 
-      if (session) {
+      if (session && session.campaignId === campaign.id) {
         existingSessionId = session.id
         existingStatus = session.status
 
-        const { data: answers } = await supabase
-          .from('answers')
-          .select('question_key, value')
-          .eq('session_id', session.id)
-
-        if (answers) {
-          for (const a of answers) {
-            existingAnswers[a.question_key] = a.value
-          }
+        const answers = await getSessionAnswers(session.id)
+        for (const a of answers) {
+          existingAnswers[a.questionKey] = a.value
         }
 
         if (session.status === 'completed') {
-          const { data: draftRecord } = await supabase
-            .from('review_drafts')
-            .select('final_text, original_text')
-            .eq('session_id', session.id)
-            .maybeSingle()
-
-          if (draftRecord) {
-            existingDraftText = draftRecord.final_text || draftRecord.original_text || null
+          const draft = await getReviewDraft(session.id)
+          if (draft) {
+            existingDraftText = draft.finalText || draft.originalText || null
           }
         }
       }
     }
   }
 
-  const restaurantName = business?.name ?? 'PM Zaika Restaurant'
-  const welcomeText =
-    (business?.welcome_message?.en as string | undefined) ??
-    'Welcome to PM Zaika Restaurant! Share your honest dining experience with us in 30 seconds. For direct helpline & orders call 7488260572.'
+  const restaurantName = config.name
+  const welcomeText = config.welcomeMessage[config.settings.defaultLanguage] || config.welcomeMessage['en'] || ''
 
   return (
     <div className="min-h-screen min-h-[100dvh] min-h-safe-screen bg-[#faf8f5] bg-gradient-to-b from-[#fdfbf7] via-[#fbf7ee] to-[#f6efe0] text-stone-900 flex flex-col justify-between px-3 sm:px-6 pt-safe pb-safe py-3 sm:py-6 selection:bg-amber-600 selection:text-white relative overflow-x-hidden font-sans">
@@ -175,15 +136,15 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
       <QuizFlow
         slug={campaign.slug}
         restaurantName={restaurantName}
-        logoUrl={business?.logo_url}
-        primaryColor={business?.primary_color}
+        logoUrl={config.branding.logoUrl}
+        primaryColor={config.branding.primaryColor}
         welcomeMessage={welcomeText}
         googleReviewUrl={googleReviewUrl}
         initialSessionId={existingSessionId}
         initialStatus={existingStatus}
-        initialAnswers={existingAnswers}
+        initialAnswers={existingAnswers as Record<string, QuizAnswerValue>}
         initialDraftText={existingDraftText}
-        menuItems={menuItems || []}
+        menuItems={menuItems}
       />
 
       {/* Mobile-Friendly Footer */}
@@ -192,15 +153,17 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
           <span>Powered by</span>
           <span className="font-bold text-stone-700">ReviewPulse</span>
           <span>•</span>
-          <span className="font-semibold text-stone-800">{restaurantName}, Patna</span>
+          <span className="font-semibold text-stone-800">{restaurantName}</span>
         </div>
-        <div className="flex items-center gap-1 text-amber-800 font-medium">
-          <span>•</span>
-          <a href="tel:7488260572" className="hover:underline flex items-center gap-1">
-            <span>Helpline:</span>
-            <strong>+91 7488260572</strong>
-          </a>
-        </div>
+        {config.contact.phone && (
+          <div className="flex items-center gap-1 text-amber-800 font-medium">
+            <span>•</span>
+            <a href={`tel:${config.contact.phone}`} className="hover:underline flex items-center gap-1">
+              <span>Helpline:</span>
+              <strong>{config.contact.phone}</strong>
+            </a>
+          </div>
+        )}
       </footer>
     </div>
   )

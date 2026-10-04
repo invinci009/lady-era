@@ -7,20 +7,35 @@ import { useState, useEffect } from 'react'
 export default function OfflineIndicator() {
   const { isOnline } = usePwa()
   const [showReconnected, setShowReconnected] = useState(false)
-  const [hasBeenOffline, setHasBeenOffline] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
+  // Avoid hydration mismatch: server renders null, so first client
+  // render must also be null. Only show banners after mount.
   useEffect(() => {
-    if (!isOnline) {
-      setHasBeenOffline(true)
-    } else if (hasBeenOffline) {
-      setShowReconnected(true)
-      const timer = setTimeout(() => {
-        setShowReconnected(false)
-        setHasBeenOffline(false)
-      }, 3500)
-      return () => clearTimeout(timer)
+    setMounted(true)
+  }, [])
+
+  // Detect offline -> online transitions in effect, not during render
+  const [prevIsOnline, setPrevIsOnline] = useState(isOnline)
+  useEffect(() => {
+    if (prevIsOnline !== isOnline) {
+      setPrevIsOnline(isOnline)
+      if (!prevIsOnline && isOnline) {
+        setShowReconnected(true)
+      }
     }
-  }, [isOnline, hasBeenOffline])
+  }, [isOnline, prevIsOnline])
+
+  // Auto-hide the reconnected banner after a few seconds
+  useEffect(() => {
+    if (!showReconnected) return
+    const timer = setTimeout(() => {
+      setShowReconnected(false)
+    }, 3500)
+    return () => clearTimeout(timer)
+  }, [showReconnected])
+
+  if (!mounted) return null
 
   if (!isOnline) {
     return (

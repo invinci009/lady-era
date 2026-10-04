@@ -1,37 +1,39 @@
-/**
- * PM Zaika Restaurant Authentication & Alias Helpers
- */
+import { getRestaurantConfig } from '@/config/loader'
 
-export const PM_ZAIKA_PRIMARY_EMAIL = 'invincibleperson9@gmail.com'
-
-const ZAIKA_ALIASES = new Set([
-  'admin',
-  'owner',
-  'zaika',
-  'pmzaika',
-  'pm-zaika',
-  'admin@pmzaika.com',
-  'owner@pmzaika.com',
-  'admin@pm-zaika.com',
-  'owner@pm-zaika.com',
-  'pmzaika@gmail.com',
-  'pmzaikapatna@gmail.com',
-  'biryani',
-  'charminar',
-])
+// ==============================================================================
+// Authentication Helpers
+// ==============================================================================
+// Resolves email aliases to the configured admin email.
+// ==============================================================================
 
 /**
- * Resolves any restaurant administrator alias or custom email
- * to the registered Supabase Auth email.
+ * Get the admin email from configuration.
  */
-export function resolveZaikaEmail(input?: string | null): string | null {
+export function getAdminEmail(): string | null {
+  const config = getRestaurantConfig()
+  return config.contact.email || null
+}
+
+/**
+ * Resolve any email alias or input to the configured admin email.
+ */
+export function resolveAdminEmail(input?: string | null): string | null {
   if (!input || typeof input !== 'string') return null
   const trimmed = input.trim()
   if (!trimmed) return null
 
-  const lower = trimmed.toLowerCase()
-  if (ZAIKA_ALIASES.has(lower)) {
-    return PM_ZAIKA_PRIMARY_EMAIL
+  const adminEmail = getAdminEmail()
+  if (!adminEmail) return trimmed
+
+  // If the input matches the admin email, return it
+  if (trimmed.toLowerCase() === adminEmail.toLowerCase()) {
+    return adminEmail
+  }
+
+  // Check for common aliases
+  const aliases = ['admin', 'owner', 'manager', 'staff']
+  if (aliases.includes(trimmed.toLowerCase())) {
+    return adminEmail
   }
 
   return trimmed

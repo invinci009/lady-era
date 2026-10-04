@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Plain Node.js scripts (CommonJS) — not part of Next.js app bundle:
+    "scripts/**",
+    "firebase/functions/**",
   ]),
 ]);
 

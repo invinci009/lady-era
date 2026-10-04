@@ -1,81 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import type { Database } from '@/lib/supabase/types'
-import { resolveZaikaEmail } from '@/lib/auth-helpers'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { getServerAuth } from '@/lib/firebase/server-auth'
+import { resolveAdminEmail } from '@/lib/auth-helpers'
+import { z } from 'zod'
+
+const loginSchema = z.object({
+  email: z.string().min(1),
+  password: z.string().min(1),
+})
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}))
-    const { username, password } = body
+    const parsed = loginSchema.safeParse(body)
 
-    if (!username || !password) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Username/Email and password are required' },
+        { error: 'Invalid email or password' },
         { status: 400 }
       )
     }
 
-    // Resolve owner aliases
-    const resolvedEmail = resolveZaikaEmail(username) || String(username).trim()
+    const { password } = parsed.data
 
-    // Prepare response object to collect cookies
-    let response = NextResponse.json({ success: true })
+    // Resolve aliases (admin/owner/manager/staff) to the configured owner email
+    const resolvedEmail = resolveAdminEmail(parsed.data.email) ?? parsed.data.email.trim()
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resolvedEmail)) {
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 400 }
+      )
+    }
 
-    const supabase = createServerClient<Database>(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          getAll: () => request.cookies.getAll(),
-          setAll: (cookiesToSet) => {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, {
-                ...options,
-                path: '/',
-                sameSite: 'lax',
-                secure: process.env.NODE_ENV === 'production',
-              })
-            })
-          },
-        },
-      }
-    )
+    // Sign in with Firebase Auth (server-side client SDK — never import
+    // '@/lib/firebase/client' here, it has a 'use client' directive)
+    const auth = getServerAuth()
+    const userCredential = await signInWithEmailAndPassword(auth, resolvedEmail, password)
 
-    // Sign in with 8s timeout to prevent any indefinite hanging
-    const authPromise = supabase.auth.signInWithPassword({
-      email: resolvedEmail,
-      password: String(password),
+    // Get ID token
+    const idToken = await userCredential.user.getIdToken()
+
+    // Set session cookie
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+      },
     })
 
-    const timeoutPromise = new Promise<{ data: any; error: any }>((_, reject) =>
-      setTimeout(() => reject(new Error('Authentication service timeout. Please try again.')), 8000)
-    )
-
-    const { data, error } = await Promise.race([authPromise, timeoutPromise])
-
-    if (error) {
-      return NextResponse.json(
-        { error: error.message || 'Invalid username or password' },
-        { status: 401 }
-      )
-    }
-
-    if (!data.user) {
-      return NextResponse.json(
-        { error: 'User account not found' },
-        { status: 404 }
-      )
-    }
+    // Set Firebase token cookie
+    response.cookies.set('firebase_token', idToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+    })
 
     return response
-  } catch (err: any) {
-    console.error('Server login error:', err)
-    return NextResponse.json(
-      { error: err?.message || 'Login failed. Please check your credentials.' },
-      { status: 500 }
-    )
+  } catch (error) {
+    console.error('Login error:', error)
+
+    // Map Firebase error codes to user-friendly messages
+    const errorCode = typeof error === 'object' && error !== null && 'code' in error
+      ? (error as { code: unknown }).code
+      : undefined
+    let errorMessage = 'Invalid login credentials. Please try again.'
+
+    if (errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password') {
+      errorMessage = 'Invalid email or password.'
+    } else if (errorCode === 'auth/too-many-requests') {
+      errorMessage = 'Too many failed attempts. Please try again later.'
+    } else if (errorCode === 'auth/invalid-credential') {
+      errorMessage = 'Invalid email or password.'
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: 401 })
   }
 }

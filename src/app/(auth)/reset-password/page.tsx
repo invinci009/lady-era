@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,17 +15,21 @@ import {
   CheckCircle2,
   AlertCircle,
   ShieldCheck,
-  ArrowRight,
   RefreshCw,
   Mail,
   Utensils,
   Lock,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { verifyPasswordResetCode, confirmPasswordReset } from 'firebase/auth'
+import { getFirebaseAuth } from '@/lib/firebase/client'
+import { useClientConfig } from '@/config/client'
 
 function ResetPasswordForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
+
+  const [oobCode, setOobCode] = useState<string | null>(null)
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null)
+  const [verifying, setVerifying] = useState(true)
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -35,14 +39,37 @@ function ResetPasswordForm() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isExpired, setIsExpired] = useState(false)
-  const [accessToken, setAccessToken] = useState<string | null>(null)
 
-  // Resend state if link expired
-  const [resendUsername, setResendUsername] = useState('admin')
+  // Resend state if link expired / no code
+  const [resendEmail, setResendEmail] = useState('')
   const [resendLoading, setResendLoading] = useState(false)
   const [resendMessage, setResendMessage] = useState<string | null>(null)
 
-  const supabase = createClient()
+  const { branding, restaurantName } = useClientConfig()
+
+  // Read the oobCode after hydration (avoids SSR mismatch) and verify it
+  // with Firebase. The code proves the visitor owns the email inbox.
+  useEffect(() => {
+    const code = searchParams.get('oobCode')
+    if (!code) {
+      setVerifying(false)
+      setIsExpired(true)
+      return
+    }
+    setOobCode(code)
+
+    verifyPasswordResetCode(getFirebaseAuth(), code)
+      .then((email) => {
+        setVerifiedEmail(email)
+        setVerifying(false)
+      })
+      .catch(() => {
+        setIsExpired(true)
+        setError('This password reset link is invalid or has expired. Request a new one below.')
+        setVerifying(false)
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Calculate password strength
   const calculateStrength = (pass: string) => {
@@ -57,53 +84,6 @@ function ResetPasswordForm() {
   const strengthScore = calculateStrength(password)
   const strengthLabels = ['Too weak', 'Weak', 'Fair', 'Good', 'Strong']
   const strengthColors = ['bg-slate-700', 'bg-rose-500', 'bg-amber-500', 'bg-sky-500', 'bg-emerald-500']
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    // 1. Check search params
-    const qErrorCode = searchParams.get('error_code')
-    const qErrorDesc = searchParams.get('error_description')
-
-    // 2. Check hash fragments (Supabase auth redirects frequently land in hash)
-    const hashString = window.location.hash.replace(/^#/, '')
-    const hashParams = new URLSearchParams(hashString)
-    const hErrorCode = hashParams.get('error_code')
-    const hErrorDesc = hashParams.get('error_description')
-    const hAccessToken = hashParams.get('access_token')
-    const hType = hashParams.get('type')
-
-    if (hAccessToken) {
-      setAccessToken(hAccessToken)
-    }
-
-    if (qErrorCode === 'otp_expired' || hErrorCode === 'otp_expired') {
-      setIsExpired(true)
-      setError('This password reset link is invalid or has expired. Links can expire if clicked late or if scanned by email security bots.')
-      return
-    }
-
-    if (qErrorDesc || hErrorDesc) {
-      const raw = qErrorDesc || hErrorDesc || ''
-      setIsExpired(true)
-      setError(decodeURIComponent(raw.replace(/\+/g, ' ')))
-      return
-    }
-
-    // 3. Listen to Supabase auth events (e.g. PASSWORD_RECOVERY)
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || session) {
-        setIsExpired(false)
-        if (session?.access_token) {
-          setAccessToken(session.access_token)
-        }
-      }
-    })
-
-    return () => {
-      authListener?.subscription?.unsubscribe()
-    }
-  }, [searchParams, supabase])
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -120,40 +100,26 @@ function ResetPasswordForm() {
       return
     }
 
+    if (!oobCode) {
+      setError('Invalid reset session. Please request a new reset link.')
+      return
+    }
+
     setLoading(true)
 
     try {
-      // 1. Try our server endpoint with session/access token
-      const res = await fetch('/api/auth/update-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          newPassword: password,
-          accessToken: accessToken || undefined,
-        }),
-      })
+      // Firebase verifies the oobCode itself — no server roundtrip, no uid.
+      await confirmPasswordReset(getFirebaseAuth(), oobCode, password)
 
-      const data = await res.json().catch(() => ({}))
-
-      if (!res.ok) {
-        // Fallback: try client-side Supabase update
-        const { error: clientError } = await supabase.auth.updateUser({
-          password,
-        })
-
-        if (clientError) {
-          throw new Error(data.error || clientError.message || 'Failed to update password.')
-        }
-      }
-
-      setSuccess('Password updated successfully! Redirecting to dashboard...')
+      setSuccess('Password updated successfully! Redirecting to login...')
       setLoading(false)
 
       setTimeout(() => {
-        window.location.href = '/dashboard'
+        window.location.href = '/login'
       }, 1500)
-    } catch (err: any) {
-      setError(err?.message || 'Failed to update password. Your reset session may have expired.')
+    } catch {
+      setError('This link has expired or was already used. Please request a new one below.')
+      setIsExpired(true)
       setLoading(false)
     }
   }
@@ -168,7 +134,7 @@ function ResetPasswordForm() {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: resendUsername.trim() }),
+        body: JSON.stringify({ username: resendEmail.trim() }),
       })
 
       const data = await res.json().catch(() => ({}))
@@ -181,34 +147,38 @@ function ResetPasswordForm() {
 
       setResendMessage(data.message || 'Fresh password reset link sent! Please check your email inbox.')
       setResendLoading(false)
-    } catch (err: any) {
-      setError(err?.message || 'Connection error. Please try again.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Connection error. Please try again.')
       setResendLoading(false)
     }
   }
 
   return (
     <Card className="border border-slate-800 bg-slate-900/90 backdrop-blur-xl shadow-2xl text-slate-100 rounded-3xl overflow-hidden">
-      {/* Decorative gradient header accent */}
       <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-rose-500 to-amber-600" />
 
       <CardHeader className="space-y-1.5 pb-3">
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-amber-500/20">
+          <div
+            className="w-8 h-8 rounded-xl text-white flex items-center justify-center font-bold text-xs shadow-md"
+            style={{ backgroundColor: branding.primary }}
+          >
             <Utensils className="w-4 h-4" />
           </div>
-          <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-            PM Zaika Admin Security
+          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: branding.primary }}>
+            {restaurantName} Admin Security
           </span>
         </div>
         <CardTitle className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-          <KeyRound className="w-5 h-5 text-amber-500" />
+          <KeyRound className="w-5 h-5" style={{ color: branding.primary }} />
           {isExpired ? 'Reset Link Expired' : 'Set New Password'}
         </CardTitle>
         <CardDescription className="text-slate-400 text-xs">
           {isExpired
             ? 'The email reset link you opened is invalid or expired. Request a new one below.'
-            : 'Enter and confirm your new secure password below to regain full account access.'}
+            : verifiedEmail
+              ? `Resetting password for ${verifiedEmail}. Enter your new secure password below.`
+              : 'Enter and confirm your new secure password below to regain full account access.'}
         </CardDescription>
       </CardHeader>
 
@@ -234,32 +204,35 @@ function ResetPasswordForm() {
           </div>
         )}
 
-
-
-        {isExpired ? (
-          /* Expired Link Recovery Form */
+        {verifying ? (
+          <div className="py-10 text-center text-slate-400 space-y-3">
+            <Loader2 className="w-7 h-7 mx-auto animate-spin" style={{ color: branding.primary }} />
+            <p className="text-xs font-medium">Verifying reset link...</p>
+          </div>
+        ) : isExpired ? (
           <form onSubmit={handleResendLink} className="space-y-3.5 pt-1">
             <div className="space-y-1.5">
-              <Label htmlFor="resend-user" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-amber-500" />
-                Restaurant Username or Email
+              <Label htmlFor="resend-email" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5" style={{ color: branding.primary }} />
+                Email
               </Label>
               <Input
-                id="resend-user"
-                type="text"
-                placeholder="admin or owner@pmzaika.com"
-                value={resendUsername}
-                onChange={(e) => setResendUsername(e.target.value)}
+                id="resend-email"
+                type="email"
+                placeholder="your@email.com"
+                value={resendEmail}
+                onChange={(e) => setResendEmail(e.target.value)}
                 required
                 disabled={resendLoading}
-                className="bg-slate-950/70 border-slate-800 text-white placeholder:text-slate-500 h-10 rounded-xl text-xs focus-visible:ring-amber-500"
+                className="bg-slate-950/70 border-slate-800 text-white placeholder:text-slate-500 h-10 rounded-xl text-xs"
               />
             </div>
 
             <Button
               type="submit"
-              disabled={resendLoading || !resendUsername.trim()}
-              className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-bold text-xs shadow-lg shadow-amber-600/20 active:scale-95 transition cursor-pointer"
+              disabled={resendLoading || !resendEmail.trim()}
+              className="w-full h-10 rounded-xl text-white font-bold text-xs shadow-lg active:scale-95 transition cursor-pointer disabled:opacity-50"
+              style={{ backgroundColor: branding.primary }}
             >
               {resendLoading ? (
                 <>
@@ -275,12 +248,10 @@ function ResetPasswordForm() {
             </Button>
           </form>
         ) : (
-          /* Set New Password Form */
           <form onSubmit={handleUpdatePassword} className="space-y-3.5">
-            {/* New Password */}
             <div className="space-y-1.5">
               <Label htmlFor="new-password" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-amber-500" />
+                <Lock className="w-3.5 h-3.5" style={{ color: branding.primary }} />
                 New Password
               </Label>
               <div className="relative">
@@ -292,7 +263,7 @@ function ResetPasswordForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
-                  className="bg-slate-950/70 border-slate-800 text-white placeholder:text-slate-500 h-10 pr-9 rounded-xl text-xs focus-visible:ring-amber-500"
+                  className="bg-slate-950/70 border-slate-800 text-white placeholder:text-slate-500 h-10 pr-9 rounded-xl text-xs"
                 />
                 <button
                   type="button"
@@ -305,7 +276,6 @@ function ResetPasswordForm() {
                 </button>
               </div>
 
-              {/* Password Strength Meter */}
               {password.length > 0 && (
                 <div className="pt-1 space-y-1">
                   <div className="flex items-center justify-between text-[10px]">
@@ -338,11 +308,10 @@ function ResetPasswordForm() {
               )}
             </div>
 
-            {/* Confirm New Password */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="confirm-password" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+                  <ShieldCheck className="w-3.5 h-3.5" style={{ color: branding.primary }} />
                   Confirm New Password
                 </Label>
                 {confirmPassword.length > 0 && (
@@ -370,7 +339,7 @@ function ResetPasswordForm() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   disabled={loading}
-                  className="bg-slate-950/70 border-slate-800 text-white placeholder:text-slate-500 h-10 pr-9 rounded-xl text-xs focus-visible:ring-amber-500"
+                  className="bg-slate-950/70 border-slate-800 text-white placeholder:text-slate-500 h-10 pr-9 rounded-xl text-xs"
                 />
                 <button
                   type="button"
@@ -386,8 +355,9 @@ function ResetPasswordForm() {
 
             <Button
               type="submit"
-              disabled={loading || password.length < 8 || password !== confirmPassword}
-              className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-bold text-xs shadow-lg shadow-amber-600/20 active:scale-95 transition cursor-pointer disabled:opacity-50"
+              disabled={loading || password.length < 8 || password !== confirmPassword || !oobCode}
+              className="w-full h-10 rounded-xl text-white font-bold text-xs shadow-lg active:scale-95 transition cursor-pointer disabled:opacity-50"
+              style={{ backgroundColor: branding.primary }}
             >
               {loading ? (
                 <>
@@ -395,7 +365,7 @@ function ResetPasswordForm() {
                   Updating Password...
                 </>
               ) : (
-                'Save Password & Enter Dashboard'
+                'Save Password & Go to Login'
               )}
             </Button>
           </form>
@@ -409,7 +379,7 @@ function ResetPasswordForm() {
         >
           &larr; Back to Login
         </Link>
-        <span className="text-slate-600 text-[10px]">PM Zaika Restaurant</span>
+        <span className="text-slate-600 text-[10px]">{restaurantName}</span>
       </CardFooter>
     </Card>
   )

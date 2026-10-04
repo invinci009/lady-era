@@ -17,11 +17,12 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePwa } from '@/components/pwa/PwaProvider'
+import type { TabType } from './DashboardWorkspace'
 
 interface MobileMenuDrawerProps {
   isOpen: boolean
   onClose: () => void
-  onSelectTab: (tab: any) => void
+  onSelectTab: (tab: TabType) => void
   onRefresh: () => void
   feedbackCount?: number
   menuItemsCount?: number
@@ -43,7 +44,7 @@ export default function MobileMenuDrawer({
 
   if (!isOpen) return null
 
-  const handleTabClick = (tab: string) => {
+  const handleTabClick = (tab: TabType) => {
     onSelectTab(tab)
     onClose()
   }

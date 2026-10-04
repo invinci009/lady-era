@@ -1,22 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { businessCreateSchema } from '@/lib/validation/schemas'
-import { generateRandomSlug } from '@/lib/utils/slug'
+import { getRestaurantSettings, saveRestaurantSettings } from '@/lib/firebase/firestore'
+import { getRestaurantConfig } from '@/config/loader'
+import { getSessionFromRequest } from '@/lib/firebase/auth'
+import { z } from 'zod'
+
+const businessUpdateSchema = z.object({
+  name: z.string().min(1).max(200),
+  location: z.string().max(500).optional(),
+  phone: z.string().max(50).optional().nullable(),
+  secondary_phone: z.string().max(100).optional().nullable(),
+  timezone: z.string().default('Asia/Kolkata'),
+  logo_url: z.string().url().optional().nullable(),
+  primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional().nullable(),
+  welcome_message: z.record(z.string(), z.string()).optional(),
+  google_review_url: z.string().url().optional().nullable(),
+})
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getSessionFromRequest(request)
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    let settings = await getRestaurantSettings()
+
+    if (!settings) {
+      const config = getRestaurantConfig()
+      settings = {
+        id: 'settings',
+        name: config.name,
+        slug: config.slug,
+        contact: config.contact,
+        location: config.location,
+        google: config.google,
+        branding: config.branding,
+        features: config.features,
+        settings: config.settings,
+        welcomeMessage: config.welcomeMessage,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    }
+
+    return NextResponse.json(settings, { status: 200 })
+  } catch (error) {
+    console.error('Business GET error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getSessionFromRequest(request)
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json().catch(() => ({}))
-    const parsed = businessCreateSchema.safeParse(body)
+    const parsed = businessUpdateSchema.safeParse(body)
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -25,94 +69,44 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const admin = createAdminClient()
     const data = parsed.data
 
-    // Check if user or system already has a business
-    const { data: userBusinesses } = await admin
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', user.id)
-      .limit(1)
+    await saveRestaurantSettings({
+      name: data.name,
+      slug: data.name.toLowerCase().replace(/\s+/g, '-'),
+      contact: {
+        phone: data.phone || undefined,
+        email: undefined,
+      },
+      location: {
+        address: data.location || undefined,
+      },
+      google: {
+        reviewUrl: data.google_review_url || '',
+      },
+      branding: {
+        logoUrl: data.logo_url || undefined,
+        primaryColor: data.primary_color || '#d97706',
+        secondaryColor: '#1e293b',
+      },
+      features: {
+        aiReviews: true,
+        privateFeedback: true,
+        crm: true,
+        campaignAnalytics: true,
+        menuManagement: true,
+      },
+      settings: {
+        defaultLanguage: 'en',
+        supportedLanguages: ['en'],
+        timezone: data.timezone || 'Asia/Kolkata',
+      },
+      welcomeMessage: data.welcome_message || { en: 'Welcome!' },
+    })
 
-    let existing = userBusinesses?.[0]
-    if (!existing) {
-      const { data: defaultBiz } = await admin
-        .from('businesses')
-        .select('id')
-        .order('created_at', { ascending: true })
-        .limit(1)
-      existing = defaultBiz?.[0]
-    }
-
-    let businessId: string
-
-    if (existing) {
-      // Update existing
-      const { data: updated, error: updateError } = await admin
-        .from('businesses')
-        .update({
-          name: data.name,
-          location: data.location || null,
-          phone: data.phone || null,
-          secondary_phone: data.secondary_phone || null,
-          timezone: data.timezone,
-          logo_url: data.logo_url || null,
-          primary_color: data.primary_color || null,
-          welcome_message: data.welcome_message || null,
-          google_review_url: data.google_review_url || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existing.id)
-        .select()
-        .single()
-
-      if (updateError || !updated) {
-        return NextResponse.json({ error: 'Failed to update restaurant profile' }, { status: 500 })
-      }
-      businessId = updated.id
-    } else {
-      // Create new business
-      const { data: created, error: createError } = await admin
-        .from('businesses')
-        .insert({
-          owner_id: user.id,
-          name: data.name,
-          category: 'restaurant',
-          location: data.location || null,
-          phone: data.phone || null,
-          secondary_phone: data.secondary_phone || null,
-          timezone: data.timezone,
-          logo_url: data.logo_url || null,
-          primary_color: data.primary_color || null,
-          welcome_message: data.welcome_message || {
-            en: "Thanks for dining with us! We'd love to hear about your experience today.",
-          },
-          google_review_url: data.google_review_url || null,
-        })
-        .select()
-        .single()
-
-      if (createError || !created) {
-        console.error('Create business error:', createError)
-        return NextResponse.json({ error: 'Failed to create restaurant profile' }, { status: 500 })
-      }
-
-      businessId = created.id
-
-      // Automatically create the initial default campaign ("Table Stand")
-      const slug = generateRandomSlug(8)
-      await admin.from('campaigns').insert({
-        business_id: businessId,
-        name: 'Table Stands',
-        slug,
-        active: true,
-      })
-    }
-
-    return NextResponse.json({ success: true, business_id: businessId }, { status: 201 })
+    return NextResponse.json({ success: true }, { status: 201 })
   } catch (error) {
-    console.error('Business API error:', error)
+    console.error('Business POST error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
