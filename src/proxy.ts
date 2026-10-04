@@ -1,7 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { botFilterMiddleware } from '@/lib/middleware/bot-filter'
 import { rateLimitMiddleware } from '@/lib/middleware/rate-limit'
-import { validateSession } from '@/lib/firebase/auth'
+
+// NOTE: Do NOT import firebase-admin / validateSession here.
+// proxy.ts runs on the Edge runtime on Vercel — firebase-admin needs
+// Node.js APIs (cert, Buffer, gRPC) and `server-only`, so importing it
+// crashes with "A server error occurred" on every matched route.
+// This layer only checks token *presence*; full verification happens
+// in server components / API routes via validateSession().
 
 // ==============================================================================
 // ReviewPulse — Proxy (Next.js 16 Middleware)
@@ -29,7 +35,8 @@ export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request: { headers: request.headers } })
 
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/api/dashboard')) {
-    // Check for Firebase ID token in Authorization header or cookie
+    // Edge-safe: presence check only. Full ID-token verification happens
+    // downstream in the page / route handler (Node runtime).
     const authHeader = request.headers.get('authorization')
     const idToken = authHeader?.startsWith('Bearer ')
       ? authHeader.slice(7)
@@ -42,19 +49,6 @@ export async function proxy(request: NextRequest) {
       }
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    // Verify the Firebase ID token
-    const user = await validateSession(idToken)
-    if (!user) {
-      if (pathname.startsWith('/dashboard')) {
-        return NextResponse.redirect(new URL('/login', request.url))
-      }
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Add user info to headers for downstream use
-    response.headers.set('x-user-id', user.uid)
-    response.headers.set('x-user-email', user.email || '')
   }
 
   return response

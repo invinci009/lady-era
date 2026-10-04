@@ -21,20 +21,30 @@ let adminStorage: Storage
  * Supports both JSON string and base64-encoded JSON.
  */
 function getServiceAccount() {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY?.trim()
 
   if (!raw) {
     throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is not set')
   }
 
+  const normalize = (sa: Record<string, unknown>) => {
+    // Vercel env vars often store the private_key with escaped newlines
+    // ("\\n" literal). firebase-admin needs real newlines.
+    const key = (sa as { private_key?: unknown }).private_key
+    if (typeof key === 'string' && key.includes('\\n')) {
+      return { ...sa, private_key: key.replace(/\\n/g, '\n') }
+    }
+    return sa
+  }
+
   try {
     // Try parsing as JSON first
-    return JSON.parse(raw)
+    return normalize(JSON.parse(raw))
   } catch {
     // Try base64 decoding
     try {
       const decoded = Buffer.from(raw, 'base64').toString('utf-8')
-      return JSON.parse(decoded)
+      return normalize(JSON.parse(decoded))
     } catch {
       throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON or base64')
     }
