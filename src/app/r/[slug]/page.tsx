@@ -1,4 +1,5 @@
 import QuizFlow, { type QuizAnswerValue } from '@/components/quiz/QuizFlow'
+import FloatingSocialButtons from '@/components/quiz/FloatingSocialButtons'
 import { Sparkles, AlertTriangle } from 'lucide-react'
 import { cookies } from 'next/headers'
 import { getRestaurantConfig } from '@/config/loader'
@@ -182,6 +183,9 @@ export default async function PublicQuizPage({ params, searchParams }: PublicQui
       {/* Ambient luxury rose and soft blush glows */}
       <div className="fixed -top-12 left-1/2 -translate-x-1/2 w-80 h-80 bg-rose-400/15 rounded-full blur-3xl pointer-events-none" />
       <div className="fixed bottom-0 right-1/4 w-80 h-80 bg-pink-300/15 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Prominent Floating Social Side Buttons (Instagram & Facebook) */}
+      <FloatingSocialButtons />
 
       {/* Header Badge */}
       <header className="relative z-10 flex items-center justify-center pt-1 sm:pt-2">
