@@ -46,6 +46,10 @@ export const foodRatingSchema = z.object({ value: ratingSchema })
 export const serviceRatingSchema = z.object({ value: ratingSchema })
 
 export const likedValues = [
+  'designs',
+  'fabric',
+  'fitting',
+  'collection',
   'food',
   'service',
   'ambience',
@@ -58,7 +62,7 @@ export const likedSchema = z.object({
 })
 
 export const orderedSchema = z.object({
-  value: z.array(z.string()), // menu_item_ids or "other"
+  value: z.array(z.string()), // item_ids or "other"
 })
 
 export const commentSchema = z.object({
@@ -85,7 +89,7 @@ export const sessionSubmitSchema = z.object({
 // === Business ===
 export const businessCreateSchema = z.object({
   name: z.string().min(1).max(200),
-  category: z.literal('restaurant').default('restaurant'),
+  category: z.string().min(1).default('clothing_store'),
   location: z.string().max(500).optional(),
   phone: z.string().max(50).optional().nullable(),
   secondary_phone: z.string().max(100).optional().nullable(),
@@ -104,6 +108,10 @@ export const campaignCreateSchema = z.object({
 
 // === Private Feedback ===
 export const privateFeedbackCategories = [
+  'collection',
+  'fabric',
+  'fitting',
+  'pricing',
   'food',
   'service',
   'waiting_time',

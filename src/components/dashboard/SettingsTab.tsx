@@ -53,9 +53,9 @@ export default function SettingsTab({
   const [googleUrl, setGoogleUrl] = useState(business.googleReviewUrl || '')
   const [welcomeText, setWelcomeText] = useState(
     (typeof business.welcomeMessage === 'object' && business.welcomeMessage?.en) ||
-      "Thanks for dining with us! We'd love to hear about your experience today."
+      "Thanks for visiting Lady’s Era! We'd love to hear about your experience today."
   )
-  const [primaryColor, setPrimaryColor] = useState(business.primaryColor || '#f43f5e')
+  const [primaryColor, setPrimaryColor] = useState(business.primaryColor || '#e11d48')
   const [isSavingProfile, setIsSavingProfile] = useState(false)
   const [profileSuccess, setProfileSuccess] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
@@ -189,7 +189,7 @@ export default function SettingsTab({
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight">Settings &amp; Security</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Configure restaurant preferences, Google review redirect, and owner security credentials
+            Configure boutique preferences, Google review redirect, and owner security credentials
           </p>
         </div>
 
@@ -200,7 +200,7 @@ export default function SettingsTab({
             onClick={() => setActiveSection('profile')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeSection === 'profile'
-                ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white font-bold shadow-xs'
+                ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white font-bold shadow-xs'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -212,7 +212,7 @@ export default function SettingsTab({
             onClick={() => setActiveSection('security')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeSection === 'security'
-                ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white font-bold shadow-xs'
+                ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white font-bold shadow-xs'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -228,11 +228,11 @@ export default function SettingsTab({
           <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-xl">
             <CardHeader className="pb-4 border-b border-slate-800">
               <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-amber-500" />
+                <Sliders className="w-4 h-4 text-rose-500" />
                 Profile Details
               </CardTitle>
               <CardDescription className="text-xs text-slate-400">
-                Information displayed to guests scanning QR codes
+                Information displayed to shoppers scanning QR codes
               </CardDescription>
             </CardHeader>
 
@@ -252,7 +252,7 @@ export default function SettingsTab({
 
               <div className="space-y-1.5">
                 <Label htmlFor="sName" className="text-xs font-medium text-slate-300">
-                  Restaurant Name
+                  Boutique / Store Name
                 </Label>
                 <Input
                   id="sName"
@@ -271,7 +271,7 @@ export default function SettingsTab({
                   id="sLoc"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. 123 Main Street, City"
+                  placeholder="e.g. Arsh Market, Anisabad-Khagaul Road, Phulwarisharif, Patna"
                   className="bg-slate-950/60 border-slate-800 text-white h-10 text-xs rounded-xl"
                 />
               </div>
@@ -280,10 +280,10 @@ export default function SettingsTab({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="sPhone" className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-amber-400" />
-                      Main Customer Helpline No.
+                      <Phone className="w-3.5 h-3.5 text-rose-400" />
+                      Main Boutique Helpline No.
                     </Label>
-                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded">
                       Customer Facing
                     </span>
                   </div>
@@ -291,11 +291,11 @@ export default function SettingsTab({
                     id="sPhone"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. 9876543210"
+                    placeholder="e.g. +917484870260"
                     className="bg-slate-950/60 border-slate-800 text-white h-10 text-xs rounded-xl"
                   />
                   <p className="text-[10px] text-slate-400">
-                    Primary number displayed to diners on survey &amp; thank you cards.
+                    Primary number displayed to shoppers on survey &amp; thank you cards.
                   </p>
                 </div>
 
@@ -341,7 +341,7 @@ export default function SettingsTab({
                   rows={3}
                   value={welcomeText}
                   onChange={(e) => setWelcomeText(e.target.value)}
-                  className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500"
                 />
               </div>
 
@@ -360,7 +360,7 @@ export default function SettingsTab({
 
               <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>ReviewPulse policy guardrails are permanently active for this restaurant.</span>
+                <span>ReviewPulse policy guardrails are permanently active for this boutique.</span>
               </div>
             </CardContent>
 
@@ -368,7 +368,7 @@ export default function SettingsTab({
               <Button
                 type="submit"
                 disabled={isSavingProfile}
-                className="bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white text-xs font-semibold h-10 px-6 rounded-xl shadow-md shadow-amber-600/20 cursor-pointer active:scale-95"
+                className="bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white text-xs font-semibold h-10 px-6 rounded-xl shadow-md shadow-rose-600/20 cursor-pointer active:scale-95"
               >
                 {isSavingProfile ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : null}
                 Save Profile Changes
@@ -612,7 +612,7 @@ export default function SettingsTab({
                     newPassword.length < 8 ||
                     newPassword !== confirmPassword
                   }
-                  className="bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white text-xs font-semibold h-10 px-6 rounded-xl shadow-md shadow-amber-600/20 cursor-pointer active:scale-95 disabled:opacity-50"
+                  className="bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white text-xs font-semibold h-10 px-6 rounded-xl shadow-md shadow-rose-600/20 cursor-pointer active:scale-95 disabled:opacity-50"
                 >
                   {isSavingPass ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : null}
                   Update Password

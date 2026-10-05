@@ -18,7 +18,7 @@ let cachedConfig: RestaurantConfig | null = null
  * Falls back to environment variables for Firebase config.
  */
 export function getRestaurantConfig(): RestaurantConfig {
-  if (cachedConfig) return cachedConfig
+  if (process.env.NODE_ENV === 'production' && cachedConfig) return cachedConfig
 
   // Try to load from config.json
   const configPath = join(process.cwd(), 'config.json')

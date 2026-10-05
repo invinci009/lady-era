@@ -9,11 +9,11 @@ interface StarRatingQuestionProps {
 }
 
 const RATING_LABELS: Record<number, string> = {
-  1: 'Disappointing experience',
+  1: 'Disappointing visit',
   2: 'Could have been better',
   3: 'Good / Average',
-  4: 'Very good!',
-  5: 'Outstanding experience!',
+  4: 'Very pleasant & lovely!',
+  5: 'Outstanding boutique experience!',
 }
 
 export default function StarRatingQuestion({ value, onChange }: StarRatingQuestionProps) {
@@ -41,23 +41,23 @@ export default function StarRatingQuestion({ value, onChange }: StarRatingQuesti
   return (
     <div className="space-y-6 text-center animate-in fade-in slide-in-from-bottom-3 duration-300">
       <div className="space-y-2.5">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
-          <span className="text-[11px] font-semibold tracking-wider uppercase text-amber-900">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
+          <span className="text-[11px] font-semibold tracking-wider uppercase text-rose-900">
             Question 1 of 6
           </span>
           <span className="text-stone-300">•</span>
-          <span className="text-[11px] text-amber-800 font-medium">Required</span>
+          <span className="text-[11px] text-rose-800 font-medium">Required</span>
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
           How was your{' '}
-          <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-yellow-600 bg-clip-text text-transparent">
-            overall experience
+          <span className="bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 bg-clip-text text-transparent">
+            shopping experience
           </span>{' '}
           today?
         </h2>
         <p className="text-sm text-stone-600">
-          Tap a star to rate your dining visit
+          Tap a star to rate your visit to Lady’s Era
         </p>
       </div>
 

@@ -27,10 +27,10 @@ export default function QuizCompletedView({
           Thank you!
         </h2>
         <p className="text-sm text-slate-300 font-medium">
-          We&apos;ve recorded your feedback for {restaurantName}.
+          We&apos;ve recorded your feedback for {restaurantName || "Lady's Era"}.
         </p>
         <p className="text-xs text-slate-400 max-w-xs mx-auto pt-1">
-          Your authentic feedback helps the team prepare better dishes and elevate dining service every day.
+          Your authentic feedback helps our team curate better collections and elevate your boutique shopping experience every day.
         </p>
       </div>
 

@@ -13,11 +13,12 @@ interface PrivateFeedbackModalProps {
 }
 
 const CATEGORIES = [
-  { key: 'food', label: 'Food quality' },
-  { key: 'service', label: 'Hospitality / Service' },
-  { key: 'waiting_time', label: 'Waiting time' },
-  { key: 'cleanliness', label: 'Cleanliness' },
-  { key: 'billing', label: 'Billing / Price' },
+  { key: 'collection', label: 'Collection & Designs' },
+  { key: 'fitting', label: 'Fitting & Sizing' },
+  { key: 'fabric', label: 'Fabric & Quality' },
+  { key: 'service', label: 'Staff Service & Styling' },
+  { key: 'pricing', label: 'Pricing & Offers' },
+  { key: 'cleanliness', label: 'Store Ambience & Trials' },
   { key: 'other', label: 'Other' },
 ]
 
@@ -29,7 +30,7 @@ export default function PrivateFeedbackModal({
 }: PrivateFeedbackModalProps) {
   const { config, helplinePhone } = useClientConfig()
   const activePhone = helplinePhone || config.contact?.phone || ''
-  const [category, setCategory] = useState<string>('food')
+  const [category, setCategory] = useState<string>('collection')
   const [message, setMessage] = useState('')
   const [contactName, setContactName] = useState('')
   const [contactValue, setContactValue] = useState('')

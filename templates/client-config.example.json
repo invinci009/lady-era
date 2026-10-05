@@ -1,26 +1,31 @@
 {
-  "name": "Your Restaurant Name",
-  "slug": "your-restaurant-slug",
+  "name": "Lady’s Era",
+  "slug": "ladys-era",
   "contact": {
-    "phone": "+91XXXXXXXXXX",
-    "helpline": "+91XXXXXXXXXX",
-    "email": "contact@yourrestaurant.com"
+    "phone": "+917484870260",
+    "helpline": "+917484870260",
+    "email": ""
   },
   "location": {
-    "address": "123 Main Street",
-    "city": "Your City",
-    "state": "Your State",
-    "country": "Your Country"
+    "address": "Arsh Market, Ground Floor, Anisabad-Khagaul Road, Near Mahavir Cancer Sansthan & Sushil Plaza Cinema Hall, Phulwarisharif",
+    "city": "Patna",
+    "state": "Bihar",
+    "country": "India"
   },
   "google": {
-    "reviewUrl": "https://search.google.com/local/writereview?placeid=YOUR_PLACE_ID"
+    "placeId": "ChIJu6Jvojep8jkROH9r22RNecc",
+    "reviewUrl": "https://search.google.com/local/writereview?placeid=ChIJu6Jvojep8jkROH9r22RNecc"
+  },
+  "social": {
+    "instagram": "https://www.instagram.com/ladysera_phulwarisharif_patna?stkn=aTdkZ25vdXRybXMx",
+    "facebook": "https://www.facebook.com/share/1dCiFQHFeH/?mibextid=wwXIfr"
   },
   "branding": {
-    "logoUrl": "https://storage.googleapis.com/your-project.appspot.com/branding/logo.png",
-    "faviconUrl": "https://storage.googleapis.com/your-project.appspot.com/branding/favicon.ico",
-    "primaryColor": "#d97706",
-    "secondaryColor": "#1e293b",
-    "accentColor": "#f59e0b"
+    "logoUrl": "/ladys-era-logo.png",
+    "faviconUrl": "/ladys-era-logo.png",
+    "primaryColor": "#e11d48",
+    "secondaryColor": "#09090b",
+    "accentColor": "#f43f5e"
   },
   "features": {
     "aiReviews": true,
@@ -33,10 +38,10 @@
   },
   "settings": {
     "defaultLanguage": "en",
-    "supportedLanguages": ["en"],
+    "supportedLanguages": ["en", "hi"],
     "timezone": "Asia/Kolkata"
   },
   "welcomeMessage": {
-    "en": "Thanks for dining with us! We'd love to hear about your experience today."
+    "en": "Thanks for visiting Lady’s Era! We'd love to hear about your experience today."
   }
 }

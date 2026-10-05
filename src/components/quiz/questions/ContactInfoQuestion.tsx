@@ -62,22 +62,22 @@ export default function ContactInfoQuestion({
     <div className="space-y-6 text-center animate-in fade-in slide-in-from-bottom-3 duration-300">
       {/* Header Pill */}
       <div className="space-y-2.5">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
-          <span className="text-[11px] font-semibold tracking-wider uppercase text-amber-900">
-            Stay Connected
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
+          <span className="text-[11px] font-semibold tracking-wider uppercase text-rose-900">
+            Stay Connected • VIP Club
           </span>
         </div>
 
         <h2 className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
           Would you like to{' '}
-          <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-yellow-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 bg-clip-text text-transparent">
             stay in touch
           </span>
           ?
         </h2>
         <p className="text-sm text-stone-600 max-w-sm mx-auto leading-relaxed">
-          Leave your mobile number so we can reach out with special event invites and new menu updates on WhatsApp.
+          Leave your mobile number so we can reach out with new fashion arrivals, exclusive collection launches, and VIP boutique discounts on WhatsApp.
         </p>
       </div>
 
@@ -169,7 +169,7 @@ export default function ContactInfoQuestion({
           <div
             className={`w-5 h-5 rounded-md border mt-0.5 flex items-center justify-center transition-colors ${
               optIn
-                ? 'bg-amber-600 border-amber-600 text-white shadow-xs'
+                ? 'bg-rose-600 border-rose-600 text-white shadow-xs'
                 : 'border-stone-300 bg-white'
             }`}
           >
@@ -181,7 +181,7 @@ export default function ContactInfoQuestion({
               Receive updates on WhatsApp
             </span>
             <span className="text-[11px] text-stone-500 block">
-              Get notified about special dining offers, new {restaurantName ? `${restaurantName} ` : ''}menu items &amp; festive discounts. Unsubscribe anytime.
+              Get notified about seasonal arrivals, new collections at {restaurantName || "Lady's Era"} &amp; VIP member discounts. Unsubscribe anytime.
             </span>
           </div>
         </label>

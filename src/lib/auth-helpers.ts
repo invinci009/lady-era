@@ -7,11 +7,11 @@ import { getRestaurantConfig } from '@/config/loader'
 // ==============================================================================
 
 /**
- * Get the admin email from configuration.
+ * Get the admin email from configuration, falling back to Firebase admin account.
  */
-export function getAdminEmail(): string | null {
+export function getAdminEmail(): string {
   const config = getRestaurantConfig()
-  return config.contact.email || null
+  return config.contact.email || 'admin@ladysera.com'
 }
 
 /**
@@ -23,7 +23,6 @@ export function resolveAdminEmail(input?: string | null): string | null {
   if (!trimmed) return null
 
   const adminEmail = getAdminEmail()
-  if (!adminEmail) return trimmed
 
   // If the input matches the admin email, return it
   if (trimmed.toLowerCase() === adminEmail.toLowerCase()) {
@@ -31,7 +30,7 @@ export function resolveAdminEmail(input?: string | null): string | null {
   }
 
   // Check for common aliases
-  const aliases = ['admin', 'owner', 'manager', 'staff']
+  const aliases = ['admin', 'owner', 'manager', 'staff', 'ladys-era', 'ladysera']
   if (aliases.includes(trimmed.toLowerCase())) {
     return adminEmail
   }

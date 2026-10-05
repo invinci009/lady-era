@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <span className="font-black text-xl tracking-wider">{restaurantName.charAt(0)}</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">{restaurantName}</h1>
-          <p className="text-sm text-slate-400 mt-1">Restaurant Experience & Authentic Reviews</p>
+          <p className="text-sm text-slate-400 mt-1">Exclusive Women&apos;s Fashion &amp; Boutique Experience</p>
         </div>
         {children}
       </div>

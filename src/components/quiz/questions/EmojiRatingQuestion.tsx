@@ -8,11 +8,11 @@ interface EmojiRatingQuestionProps {
 }
 
 const EMOJI_OPTIONS = [
-  { rating: 1, emoji: '😞', label: 'Bad' },
+  { rating: 1, emoji: '😞', label: 'Limited' },
   { rating: 2, emoji: '😕', label: 'Fair' },
-  { rating: 3, emoji: '😐', label: 'Okay' },
-  { rating: 4, emoji: '🙂', label: 'Good' },
-  { rating: 5, emoji: '😍', label: 'Amazing!' },
+  { rating: 3, emoji: '😐', label: 'Average' },
+  { rating: 4, emoji: '🙂', label: 'Trendy' },
+  { rating: 5, emoji: '😍', label: 'Stunning!' },
 ]
 
 export default function EmojiRatingQuestion({ value, onChange }: EmojiRatingQuestionProps) {
@@ -37,23 +37,23 @@ export default function EmojiRatingQuestion({ value, onChange }: EmojiRatingQues
   return (
     <div className="space-y-6 text-center animate-in fade-in slide-in-from-bottom-3 duration-300">
       <div className="space-y-2.5">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
-          <span className="text-[11px] font-semibold tracking-wider uppercase text-amber-900">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
+          <span className="text-[11px] font-semibold tracking-wider uppercase text-rose-900">
             Question 2 of 6
           </span>
           <span className="text-stone-300">•</span>
-          <span className="text-[11px] text-amber-800 font-medium">Required</span>
+          <span className="text-[11px] text-rose-800 font-medium">Required</span>
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
-          How did you find the{' '}
-          <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-yellow-600 bg-clip-text text-transparent">
-            food &amp; flavors
+          How did you find our{' '}
+          <span className="bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 bg-clip-text text-transparent">
+            collection &amp; styles
           </span>
           ?
         </h2>
         <p className="text-sm text-stone-600">
-          Taste, aroma, spices, and tenderness
+          Design appeal, fabric quality, trendy collection &amp; fit
         </p>
       </div>
 

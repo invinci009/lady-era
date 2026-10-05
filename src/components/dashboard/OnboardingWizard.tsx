@@ -6,33 +6,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Utensils, ArrowRight, Loader2, Sparkles, ShieldCheck, CheckCircle2 } from 'lucide-react'
+import { ShoppingBag, ArrowRight, Loader2, Sparkles, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import { useClientConfig } from '@/config/client'
 
 export default function OnboardingWizard() {
   const router = useRouter()
   const { config, restaurantName, helplinePhone } = useClientConfig()
   const [step, setStep] = useState(1)
-  const [name, setName] = useState(restaurantName || config.name || '')
+  const [name, setName] = useState(restaurantName || config.name || "Lady’s Era")
   const [location, setLocation] = useState(
     config.location?.address
       ? [config.location.address, config.location.area, config.location.city, config.location.state, config.location.pincode]
           .filter(Boolean)
           .join(', ')
-      : ''
+      : 'Arsh Market, Anisabad-Khagaul Road, Phulwarisharif, Patna'
   )
-  const [phone, setPhone] = useState(helplinePhone || config.contact?.phone || '')
-  const [googleReviewUrl, setGoogleReviewUrl] = useState(config.google?.reviewUrl || '')
+  const [phone, setPhone] = useState(helplinePhone || config.contact?.phone || '+917484870260')
+  const [googleReviewUrl, setGoogleReviewUrl] = useState(config.google?.reviewUrl || 'https://search.google.com/local/writereview?placeid=ChIJu6Jvojep8jkROH9r22RNecc')
   const [welcomeMessage, setWelcomeMessage] = useState(
     config.welcomeMessage?.[config.settings?.defaultLanguage || 'en'] ||
-      `Welcome to ${restaurantName || 'our restaurant'}! Share your honest dining experience with us in 30 seconds.`
+      "Thanks for visiting Lady’s Era! We'd love to hear about your experience today."
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleFinish = async () => {
     if (!name.trim()) {
-      setError('Please enter your restaurant name')
+      setError('Please enter your boutique store name')
       return
     }
 
@@ -45,7 +45,7 @@ export default function OnboardingWizard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          category: 'restaurant',
+          category: 'boutique',
           location: location.trim() || undefined,
           phone: phone.trim() || undefined,
           google_review_url: googleReviewUrl.trim() || null,
@@ -69,14 +69,14 @@ export default function OnboardingWizard() {
   return (
     <div className="max-w-xl mx-auto py-12 px-4 space-y-6 animate-in fade-in duration-300">
       <div className="text-center space-y-2">
-        <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-rose-500 to-amber-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/20 mb-2">
-          <Utensils className="w-6 h-6" />
+        <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-rose-600 via-rose-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-rose-500/20 mb-2">
+          <ShoppingBag className="w-6 h-6" />
         </div>
         <h1 className="text-2xl font-bold text-white tracking-tight sm:text-3xl">
-          Set up your restaurant
+          Set up your boutique store
         </h1>
         <p className="text-sm text-slate-400">
-          Takes less than 2 minutes. Start collecting feedback today.
+          Takes less than 2 minutes. Start collecting shopper feedback today.
         </p>
       </div>
 
@@ -85,14 +85,14 @@ export default function OnboardingWizard() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base text-white flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-rose-400" />
-              {step === 1 ? 'Step 1: Restaurant Details' : 'Step 2: Guest Experience'}
+              {step === 1 ? 'Step 1: Boutique Details' : 'Step 2: Shopper Experience'}
             </CardTitle>
             <span className="text-xs font-semibold text-slate-400">Step {step} of 2</span>
           </div>
           <CardDescription className="text-xs text-slate-400">
             {step === 1
-              ? 'Tell us your restaurant name and review link'
-              : 'Customize the welcome greeting seen by diners'}
+              ? 'Tell us your boutique store name and Google review link'
+              : 'Customize the welcome greeting seen by shoppers'}
           </CardDescription>
         </CardHeader>
 
@@ -107,28 +107,28 @@ export default function OnboardingWizard() {
             <>
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-xs font-medium text-slate-300">
-                  Restaurant Name <span className="text-rose-400">*</span>
+                  Boutique / Store Name <span className="text-rose-400">*</span>
                 </Label>
                 <Input
                   id="name"
-                  placeholder="e.g. Copper Chimney Bistro"
+                  placeholder="e.g. Lady’s Era"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="bg-slate-950/60 border-slate-800 text-white h-10"
+                  className="bg-slate-950/60 border-slate-800 text-white h-10 focus:border-rose-500"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="location" className="text-xs font-medium text-slate-300">
-                  Location / City (optional)
+                  Location / Address (optional)
                 </Label>
                 <Input
                   id="location"
-                  placeholder="e.g. Indiranagar, Bengaluru"
+                  placeholder="e.g. Arsh Market, Phulwarisharif, Patna"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="bg-slate-950/60 border-slate-800 text-white h-10"
+                  className="bg-slate-950/60 border-slate-800 text-white h-10 focus:border-rose-500"
                 />
               </div>
 
@@ -138,10 +138,10 @@ export default function OnboardingWizard() {
                 </Label>
                 <Input
                   id="googleUrl"
-                  placeholder="https://g.page/r/your-review-link"
+                  placeholder="https://search.google.com/local/writereview?placeid=..."
                   value={googleReviewUrl}
                   onChange={(e) => setGoogleReviewUrl(e.target.value)}
-                  className="bg-slate-950/60 border-slate-800 text-white h-10"
+                  className="bg-slate-950/60 border-slate-800 text-white h-10 focus:border-rose-500"
                 />
                 <p className="text-[11px] text-slate-400">
                   Found on your Google Business Profile &gt; &quot;Ask for reviews&quot;. Can be added later.
@@ -154,7 +154,7 @@ export default function OnboardingWizard() {
             <>
               <div className="space-y-2">
                 <Label htmlFor="welcome" className="text-xs font-medium text-slate-300">
-                  Welcome Greeting for Customers
+                  Welcome Greeting for Shoppers
                 </Label>
                 <textarea
                   id="welcome"
@@ -164,7 +164,7 @@ export default function OnboardingWizard() {
                   className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500"
                 />
                 <p className="text-[11px] text-slate-400">
-                  Shown on the QR landing screen before the 5-question quiz.
+                  Shown on the QR landing screen before the 5-question boutique quiz.
                 </p>
               </div>
 
@@ -199,13 +199,13 @@ export default function OnboardingWizard() {
               type="button"
               onClick={() => {
                 if (!name.trim()) {
-                  setError('Please enter your restaurant name')
+                  setError('Please enter your boutique store name')
                   return
                 }
                 setError(null)
                 setStep(2)
               }}
-              className="bg-gradient-to-r from-rose-500 to-amber-500 text-white text-xs font-semibold h-10 px-5 rounded-xl shadow-md shadow-rose-500/20 cursor-pointer"
+              className="bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white text-xs font-semibold h-10 px-5 rounded-xl shadow-md shadow-rose-500/20 cursor-pointer"
             >
               Next Step
               <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
@@ -215,17 +215,17 @@ export default function OnboardingWizard() {
               type="button"
               onClick={handleFinish}
               disabled={isSubmitting}
-              className="bg-gradient-to-r from-rose-500 to-amber-500 text-white text-xs font-semibold h-10 px-6 rounded-xl shadow-md shadow-rose-500/20 cursor-pointer"
+              className="bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white text-xs font-semibold h-10 px-6 rounded-xl shadow-md shadow-rose-500/20 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-                  Creating restaurant...
+                  Setting up boutique...
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                  Launch Restaurant
+                  Launch Boutique Store
                 </>
               )}
             </Button>

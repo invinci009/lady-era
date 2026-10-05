@@ -2,7 +2,7 @@
 
 import React from 'react'
 import {
-  Utensils,
+  ShoppingBag,
   MessageSquareHeart,
   Settings,
   ExternalLink,
@@ -43,7 +43,7 @@ export default function MobileMenuDrawer({
 }: MobileMenuDrawerProps) {
   const { isInstalled, isInstallable, isIOS, setShowInstallModal, promptInstall } = usePwa()
   const { config } = useClientConfig()
-  const activeSlug = config.slug || 'survey'
+  const activeSlug = config.slug || 'ladys-era'
 
   if (!isOpen) return null
 
@@ -66,14 +66,14 @@ export default function MobileMenuDrawer({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${restaurantName} — Guest Feedback`,
-          text: `Share your dining experience at ${restaurantName}!`,
+          title: `${restaurantName || "Lady's Era"} — Guest Feedback`,
+          text: `Share your boutique shopping experience at ${restaurantName || "Lady's Era"}!`,
           url: surveyUrl,
         })
       } catch {}
     } else {
       navigator.clipboard.writeText(surveyUrl)
-      alert('Survey link copied to clipboard!')
+      alert('Boutique review link copied to clipboard!')
     }
   }
 
@@ -90,8 +90,8 @@ export default function MobileMenuDrawer({
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-500 flex items-center justify-center text-white font-extrabold shadow-md shadow-amber-600/25 text-xs tracking-wider">
-              {(restaurantName || config.name || 'RP')
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 via-rose-500 to-pink-500 flex items-center justify-center text-white font-extrabold shadow-md shadow-rose-600/25 text-xs tracking-wider">
+              {(restaurantName || config.name || 'LE')
                 .split(' ')
                 .map((w) => w[0])
                 .filter(Boolean)
@@ -104,7 +104,7 @@ export default function MobileMenuDrawer({
                 {restaurantName || config.name}
               </h2>
               <p className="text-[11px] text-slate-400">
-                {restaurantLocation || config.location?.city || 'Patna'} • Management Portal
+                {restaurantLocation || config.location?.city || 'Patna'} • Boutique Portal
               </p>
             </div>
           </div>
@@ -120,14 +120,14 @@ export default function MobileMenuDrawer({
         </div>
 
         {/* PWA App Status Banner */}
-        <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/30 flex items-center justify-between gap-3">
+        <div className="p-3 rounded-2xl bg-gradient-to-r from-rose-950/40 via-slate-900 to-slate-950 border border-rose-500/30 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
               <Smartphone className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-xs font-bold text-amber-300 block">
-                {isInstalled ? 'ReviewPulse Installed' : 'Install Mobile App'}
+              <span className="text-xs font-bold text-rose-300 block">
+                {isInstalled ? 'Lady’s Era App Installed' : 'Install Boutique App'}
               </span>
               <span className="text-[11px] text-slate-400 block">
                 {isInstalled
@@ -145,7 +145,7 @@ export default function MobileMenuDrawer({
             <button
               type="button"
               onClick={handleInstallClick}
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 text-white text-xs font-bold shadow-md shadow-amber-600/30 flex items-center gap-1 shrink-0 active:scale-95 transition-transform cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 text-white text-xs font-bold shadow-md shadow-rose-600/30 flex items-center gap-1 shrink-0 active:scale-95 transition-transform cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Install</span>
@@ -156,7 +156,7 @@ export default function MobileMenuDrawer({
         {/* Extended Section: Additional Pages */}
         <div className="space-y-1.5">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
-            Restaurant Modules
+            Boutique Modules
           </span>
 
           <button
@@ -165,19 +165,19 @@ export default function MobileMenuDrawer({
             className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-950/70 hover:bg-slate-800/80 border border-slate-800/80 text-left transition-colors cursor-pointer group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
-                <Utensils className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center">
+                <ShoppingBag className="w-4 h-4" />
               </div>
               <div>
                 <span className="text-xs font-bold text-slate-200 group-hover:text-white block">
-                  Menu &amp; Dish Items
+                  Collections &amp; Items
                 </span>
                 <span className="text-[10px] text-slate-400">
-                  {menuItemsCount} active dishes configured
+                  {menuItemsCount} active fashion categories configured
                 </span>
               </div>
             </div>
-            <span className="text-xs text-slate-500 group-hover:text-amber-400 font-semibold">
+            <span className="text-xs text-slate-500 group-hover:text-rose-400 font-semibold">
               Manage &rarr;
             </span>
           </button>
@@ -205,7 +205,7 @@ export default function MobileMenuDrawer({
                 {feedbackCount} new
               </span>
             ) : (
-              <span className="text-xs text-slate-500 group-hover:text-amber-400 font-semibold">
+              <span className="text-xs text-slate-500 group-hover:text-rose-400 font-semibold">
                 View &rarr;
               </span>
             )}
@@ -229,7 +229,7 @@ export default function MobileMenuDrawer({
                 </span>
               </div>
             </div>
-            <span className="text-xs text-slate-500 group-hover:text-amber-400 font-semibold">
+            <span className="text-xs text-slate-500 group-hover:text-rose-400 font-semibold">
               Edit &rarr;
             </span>
           </button>
@@ -248,9 +248,9 @@ export default function MobileMenuDrawer({
               onClick={onClose}
               className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 flex flex-col items-center justify-center text-center gap-1.5 hover:bg-slate-800/60 transition-colors"
             >
-              <ExternalLink className="w-4 h-4 text-amber-400" />
+              <ExternalLink className="w-4 h-4 text-rose-400" />
               <span className="text-xs font-bold text-slate-200">Open Live Survey</span>
-              <span className="text-[10px] text-slate-400">Guest mobile view</span>
+              <span className="text-[10px] text-slate-400">Shopper mobile view</span>
             </Link>
 
             <button

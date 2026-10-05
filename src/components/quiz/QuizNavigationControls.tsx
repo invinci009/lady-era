@@ -41,7 +41,7 @@ export default function QuizNavigationControls({
         type="button"
         onClick={onNext}
         disabled={!canAdvance || isSubmitting}
-        className="ml-auto bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-700 hover:to-amber-700 text-white font-bold h-12 px-5 sm:px-7 rounded-xl shadow-lg shadow-amber-600/20 hover:shadow-amber-600/30 cursor-pointer min-w-[130px] sm:min-w-[150px] transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+        className="ml-auto bg-gradient-to-r from-rose-600 via-pink-600 to-amber-500 hover:from-rose-700 hover:to-amber-600 text-white font-bold h-12 px-5 sm:px-7 rounded-xl shadow-lg shadow-rose-600/20 hover:shadow-rose-600/30 cursor-pointer min-w-[130px] sm:min-w-[150px] transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
       >
         {isSubmitting ? (
           <>

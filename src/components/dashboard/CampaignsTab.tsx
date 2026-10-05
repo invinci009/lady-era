@@ -120,18 +120,18 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">QR Campaigns Studio</h2>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">
               Active: {campaigns.filter((c) => c.active).length}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Generate and manage tabletop QR codes, bill inserts, and counter stands for {restaurantName}
+            Generate and manage boutique counter QR stands, shopping bag tags, and trial room displays for {restaurantName || "Lady's Era"}
           </p>
         </div>
 
         <Button
           onClick={() => setIsModalOpen(true)}
-          className="w-full sm:w-auto bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-bold text-xs h-11 sm:h-10 px-4 rounded-xl shadow-md shadow-amber-600/20 cursor-pointer flex items-center justify-center gap-1.5"
+          className="w-full sm:w-auto bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold text-xs h-11 sm:h-10 px-4 rounded-xl shadow-md shadow-rose-600/20 cursor-pointer flex items-center justify-center gap-1.5"
         >
           <Plus className="w-4 h-4" />
           <span>New QR Campaign</span>
@@ -144,14 +144,14 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
           <Card
             key={camp.id}
             className={`border-slate-800 bg-slate-900/80 backdrop-blur-xl transition-all duration-200 rounded-2xl overflow-hidden shadow-lg ${
-              !camp.active ? 'opacity-85 border-slate-800/80' : 'hover:border-amber-500/40'
+              !camp.active ? 'opacity-85 border-slate-800/80' : 'hover:border-rose-500/40'
             }`}
           >
             <CardHeader className="p-4 sm:p-5 pb-3 border-b border-slate-800/80 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-0.5 min-w-0">
                   <CardTitle className="text-base font-bold text-white truncate">{camp.name}</CardTitle>
-                  <CardDescription className="text-xs text-amber-400/90 font-mono">
+                  <CardDescription className="text-xs text-rose-400/90 font-mono">
                     /r/{camp.slug}
                   </CardDescription>
                 </div>
@@ -181,7 +181,7 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
                   className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border cursor-pointer transition-all active:scale-95 ${
                     camp.active
                       ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-                      : 'border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
+                      : 'border-rose-500/40 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20'
                   }`}
                   title={camp.active ? 'Click to pause this QR code' : 'Click to activate this QR code'}
                 >
@@ -192,7 +192,7 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
                     </>
                   ) : (
                     <>
-                      <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      <span className="w-2 h-2 rounded-full bg-rose-400" />
                       <span className="text-[11px]">Paused (Tap to enable)</span>
                     </>
                   )}
@@ -221,7 +221,7 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
                   {copiedSlug === camp.slug ? (
                     <Check className="w-4 h-4 text-emerald-400" />
                   ) : (
-                    <Copy className="w-4 h-4 text-amber-400" />
+                    <Copy className="w-4 h-4 text-rose-400" />
                   )}
                   <span>{copiedSlug === camp.slug ? 'Direct Link Copied!' : 'Copy Direct Link'}</span>
                 </button>
@@ -229,19 +229,19 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
                 <div className="grid grid-cols-2 gap-2">
                   <a
                     href={`/api/business/qr?slug=${camp.slug}&format=png&download=true`}
-                    download={`reviewpulse-qr-${camp.slug}.png`}
+                    download={`ladys-era-qr-${camp.slug}.png`}
                     className="h-10 px-2.5 rounded-xl border border-slate-800 bg-slate-900/90 hover:bg-slate-800 text-slate-300 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
                   >
-                    <Download className="w-3.5 h-3.5 text-amber-400" />
+                    <Download className="w-3.5 h-3.5 text-rose-400" />
                     <span>PNG (Print)</span>
                   </a>
 
                   <a
                     href={`/api/business/qr?slug=${camp.slug}&format=svg&download=true`}
-                    download={`reviewpulse-qr-${camp.slug}.svg`}
+                    download={`ladys-era-qr-${camp.slug}.svg`}
                     className="h-10 px-2.5 rounded-xl border border-slate-800 bg-slate-900/90 hover:bg-slate-800 text-slate-300 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
                   >
-                    <Download className="w-3.5 h-3.5 text-yellow-400" />
+                    <Download className="w-3.5 h-3.5 text-pink-400" />
                     <span>SVG (Vector)</span>
                   </a>
                 </div>
@@ -250,10 +250,10 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
                   href={`/r/${camp.slug}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="block text-center text-xs text-slate-400 hover:text-amber-400 pt-2 transition-colors py-1"
+                  className="block text-center text-xs text-slate-400 hover:text-rose-400 pt-2 transition-colors py-1"
                 >
                   <span className="inline-flex items-center gap-1.5 font-medium">
-                    Preview Mobile Feedback Flow <ExternalLink className="w-3 h-3" />
+                    Preview Boutique Experience Flow <ExternalLink className="w-3 h-3" />
                   </span>
                 </a>
               </div>
@@ -266,7 +266,7 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
             <QrCode className="w-10 h-10 mx-auto text-slate-600" />
             <div className="space-y-1">
               <p className="text-base font-bold text-white">No QR Campaigns Found</p>
-              <p className="text-xs text-slate-400">Click &ldquo;New QR Campaign&rdquo; above to generate a QR code for {restaurantName}.</p>
+              <p className="text-xs text-slate-400">Click &ldquo;New QR Campaign&rdquo; above to generate a QR code for {restaurantName || "Lady's Era"}.</p>
             </div>
           </div>
         )}
@@ -294,10 +294,10 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
                 </Label>
                 <Input
                   id="campName"
-                  placeholder="e.g. Indoor Dining, Rooftop, Bill Folder"
+                  placeholder="e.g. Billing Counter Stand, Trial Room 1, Shopping Bag Card"
                   value={newCampaignName}
                   onChange={(e) => setNewCampaignName(e.target.value)}
-                  className="bg-slate-950/80 border-slate-800 focus:border-amber-500 text-white h-11 rounded-xl text-sm"
+                  className="bg-slate-950/80 border-slate-800 focus:border-rose-500 text-white h-11 rounded-xl text-sm"
                   required
                 />
               </div>
@@ -316,7 +316,7 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
                 <Button
                   type="submit"
                   disabled={isCreating || !newCampaignName.trim()}
-                  className="bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-bold h-10 px-5 rounded-xl shadow-md text-xs cursor-pointer"
+                  className="bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold h-10 px-5 rounded-xl shadow-md text-xs cursor-pointer"
                 >
                   {isCreating ? (
                     <>

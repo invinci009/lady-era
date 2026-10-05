@@ -74,13 +74,14 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
         .then((reg) => {
-          // Check for updates
+          // Immediately check for updates
+          reg.update()
           reg.addEventListener('updatefound', () => {
             const installingWorker = reg.installing
             if (installingWorker) {
               installingWorker.addEventListener('statechange', () => {
                 if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[PWA] New content is available; please refresh.')
+                  console.log('[PWA] New content is available; refreshing.')
                 }
               })
             }

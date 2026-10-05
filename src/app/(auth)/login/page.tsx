@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Eye, EyeOff, Loader2, LogIn, AlertCircle, CheckCircle2, Utensils, KeyRound, UserCheck, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, Loader2, LogIn, AlertCircle, CheckCircle2, Sparkles, KeyRound, UserCheck, ShieldCheck } from 'lucide-react'
 import ChangePasswordModal from '@/components/auth/ChangePasswordModal'
 import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal'
 import { useClientConfig } from '@/config/client'
@@ -78,13 +78,18 @@ export default function LoginPage() {
         <CardHeader className="space-y-1.5 pb-3">
           <div className="flex items-center gap-2 mb-1">
             <div
-              className="w-8 h-8 rounded-xl text-white flex items-center justify-center font-bold text-xs shadow-md"
+              className="w-9 h-9 rounded-xl text-white flex items-center justify-center font-bold text-xs shadow-md overflow-hidden border border-rose-500/30"
               style={{ backgroundColor: branding.primary }}
             >
-              <Utensils className="w-4 h-4" />
+              {branding.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={branding.logoUrl} alt={restaurantName || "Lady's Era"} className="w-full h-full object-cover" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
             </div>
             <span className="text-xs font-bold uppercase tracking-wider" style={{ color: branding.primary }}>
-              {restaurantName} Admin
+              {restaurantName || "Lady's Era"} Admin
             </span>
           </div>
           <CardTitle className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
@@ -92,7 +97,7 @@ export default function LoginPage() {
             Welcome back
           </CardTitle>
           <CardDescription className="text-slate-400 text-xs">
-            Sign in to view guest responses, customer phone numbers, &amp; analytics
+            Sign in to manage Lady&apos;s Era customer feedback, WhatsApp CRM, &amp; boutique analytics
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>

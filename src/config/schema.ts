@@ -51,6 +51,7 @@ export const restaurantConfigSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
   hindiName: z.string().optional(),
   cuisine: z.string().optional(),
+  category: z.string().optional(),
   tagline: z.string().optional(),
 
   // Contact information
@@ -58,7 +59,7 @@ export const restaurantConfigSchema = z.object({
     phone: z.string().max(50).optional(),
     helpline: z.string().max(50).optional(),
     otherPhones: z.array(z.string()).optional(),
-    email: z.string().email().optional(),
+    email: z.string().email().or(z.literal('')).optional(),
   }),
 
   // Location
@@ -74,13 +75,36 @@ export const restaurantConfigSchema = z.object({
 
   // Google review configuration
   google: z.object({
+    placeId: z.string().optional(),
     reviewUrl: googleReviewUrlSchema,
   }),
 
+  // Social media links
+  social: z
+    .object({
+      instagram: z.string().url().optional().or(z.literal('')),
+      facebook: z.string().url().optional().or(z.literal('')),
+      youtube: z.string().url().optional().or(z.literal('')),
+      whatsapp: z.string().optional().or(z.literal('')),
+    })
+    .optional(),
+
   // Branding
   branding: z.object({
-    logoUrl: z.string().url().optional(),
-    faviconUrl: z.string().url().optional(),
+    logoUrl: z
+      .string()
+      .refine(
+        (val) => val === '' || val.startsWith('/') || /^https?:\/\//.test(val),
+        { message: 'Must be a valid URL, relative path (/logo.png), or empty string' }
+      )
+      .optional(),
+    faviconUrl: z
+      .string()
+      .refine(
+        (val) => val === '' || val.startsWith('/') || /^https?:\/\//.test(val),
+        { message: 'Must be a valid URL, relative path (/logo.png), or empty string' }
+      )
+      .optional(),
     primaryColor: hexColorSchema,
     secondaryColor: hexColorSchema,
     accentColor: hexColorSchema.optional(),

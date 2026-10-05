@@ -50,12 +50,12 @@ export default function ReviewDraftCard({
         .then((data) => {
           setDraft(
             pickDraftText(data) ??
-              `Had a wonderful dining experience at ${restaurantName || 'the restaurant'} today! The food was flavorful and freshly prepared, and the service was warm and attentive. Highly recommended!`
+              `Had a wonderful shopping experience at ${restaurantName || "Lady's Era"} today! Beautiful collection, stunning designs, and the staff was so helpful and polite. Highly recommended for quality women's fashion and ethnic wear!`
           )
         })
         .catch((err) => {
           console.warn('Draft load error:', err)
-          setDraft(`Had a wonderful dining experience at ${restaurantName || 'the restaurant'} today! The food was flavorful and freshly prepared, and the service was warm and attentive. Highly recommended!`)
+          setDraft(`Had a wonderful shopping experience at ${restaurantName || "Lady's Era"} today! Beautiful collection, stunning designs, and the staff was so helpful and polite. Highly recommended for quality women's fashion and ethnic wear!`)
         })
         .finally(() => setIsLoadingDraft(false))
     }
@@ -158,15 +158,15 @@ export default function ReviewDraftCard({
 
       {/* Card Header & Disclaimer */}
       <div className="text-center space-y-1.5">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-xs font-semibold shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-rose-900 text-xs font-semibold shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-rose-600" />
           <span>AI Assisted Review Draft</span>
         </div>
         <h1 className="text-2xl font-bold text-stone-900 tracking-tight sm:text-3xl">
-          Your Dining Review
+          Your Shopping Review
         </h1>
         <p className="text-xs text-stone-600 max-w-sm mx-auto leading-relaxed">
-          Crafted based on your ratings &amp; selected dishes. Feel free to tweak it before sharing.
+          Crafted based on your ratings &amp; selected styles. Feel free to tweak it before sharing.
         </p>
       </div>
 
@@ -319,10 +319,10 @@ export default function ReviewDraftCard({
         <button
           type="button"
           onClick={onOpenPrivateFeedback}
-          className="inline-flex items-center gap-1.5 text-xs text-amber-800 hover:text-amber-900 font-semibold hover:underline underline-offset-4 cursor-pointer transition-all"
+          className="inline-flex items-center gap-1.5 text-xs text-rose-800 hover:text-rose-950 font-semibold hover:underline underline-offset-4 cursor-pointer transition-all"
         >
-          <MessageSquareHeart className="w-3.5 h-3.5 text-amber-600" />
-          <span>Send private feedback directly to the restaurant manager</span>
+          <MessageSquareHeart className="w-3.5 h-3.5 text-rose-600" />
+          <span>Send private feedback directly to boutique management</span>
         </button>
 
         <div>

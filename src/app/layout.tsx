@@ -14,7 +14,7 @@ const config = getRestaurantConfig()
 
 export const metadata: Metadata = {
   title: {
-    default: `${config.name} — Restaurant Feedback & Authentic Reviews`,
+    default: `${config.name} — Exclusive Women's Boutique & Authentic Reviews`,
     template: `%s | ${config.name}`,
   },
   description: `QR-based customer feedback platform for ${config.name} with AI-assisted review drafting`,
@@ -54,6 +54,7 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const config = getRestaurantConfig()
   return (
     <html lang="en" className="dark scroll-smooth">
       <head>

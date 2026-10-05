@@ -15,7 +15,7 @@ import OrderedItemsQuestion, { type MenuItemData } from './questions/OrderedItem
 import ContactInfoQuestion, { type ContactInfoValue } from './questions/ContactInfoQuestion'
 import { trackClientEvent } from '@/lib/client/telemetry'
 import { useClientConfig } from '@/config/client'
-import { Clock, ShieldCheck, ArrowRight, Utensils, Loader2, Star, MapPin, Sparkles, MessageCircle, Phone, Copy, Check } from 'lucide-react'
+import { Clock, ShieldCheck, ArrowRight, ShoppingBag, Loader2, Star, MapPin, Sparkles, MessageCircle, Phone, Copy, Check } from 'lucide-react'
 
 interface QuizFlowProps {
   slug: string
@@ -291,18 +291,18 @@ export default function QuizFlow({
       <>
         <OfflineBanner hasSyncError={hasSyncError} onRetry={handleRetry} />
         <main className="relative z-10 w-full max-w-md mx-auto my-auto py-2 sm:py-6">
-          <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-white border border-stone-200 shadow-[0_20px_60px_-15px_rgba(180,83,9,0.08),0_4px_20px_rgba(0,0,0,0.03)] space-y-5 sm:space-y-6 text-center animate-in fade-in zoom-in-95 duration-300">
+          <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-white border border-rose-100 shadow-[0_20px_60px_-15px_rgba(225,29,72,0.1),0_4px_20px_rgba(0,0,0,0.03)] space-y-5 sm:space-y-6 text-center animate-in fade-in zoom-in-95 duration-300">
             {/* Crest / Monogram Icon */}
             <div className="relative mx-auto w-20 h-20">
-              <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-500 text-white flex items-center justify-center shadow-xl shadow-amber-600/25 overflow-hidden border-2 border-amber-200">
+              <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-rose-600 via-pink-600 to-amber-500 text-white flex items-center justify-center shadow-xl shadow-rose-600/25 overflow-hidden border-2 border-rose-200">
                 {logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={logoUrl} alt={restaurantName} className="w-full h-full object-cover" />
                 ) : (
-                  <Utensils className="w-9 h-9" />
+                  <ShoppingBag className="w-9 h-9" />
                 )}
               </div>
-              <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-white shadow-xs border border-stone-200 text-amber-600">
+              <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-white shadow-xs border border-stone-200 text-rose-600">
                 <Sparkles className="w-4 h-4 fill-amber-400" />
               </div>
             </div>
@@ -310,11 +310,11 @@ export default function QuizFlow({
             {/* Restaurant Name & Subtitle */}
             <div className="space-y-1.5">
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-                {restaurantName || config.name || 'Restaurant'}
+                {restaurantName || config.name || "Lady's Era"}
               </h1>
-              {(config.hindiName || config.cuisine) && (
-                <p className="text-sm font-semibold text-amber-800">
-                  {[config.hindiName, config.cuisine].filter(Boolean).join(' • ')}
+              {(config.hindiName || (config as { category?: string }).category || config.cuisine) && (
+                <p className="text-sm font-semibold text-rose-800">
+                  {[config.hindiName, (config as { category?: string }).category || config.cuisine].filter(Boolean).join(' • ')}
                 </p>
               )}
               <div className="pt-1 flex items-center justify-center gap-2 text-xs text-stone-500">
@@ -332,30 +332,30 @@ export default function QuizFlow({
 
             {/* Prominent Customer Contact Box (Main Phone Display for Customers) */}
             {displayPhone && (
-              <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/60 to-yellow-50 border border-amber-300 shadow-sm space-y-2 text-left">
+              <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-rose-50 via-pink-50/70 to-rose-50 border border-rose-200 shadow-sm space-y-2 text-left">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold tracking-wider text-amber-950 uppercase flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
-                    Restaurant Contact & Orders
+                  <span className="text-[10px] font-extrabold tracking-wider text-rose-950 uppercase flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-rose-700 animate-pulse" />
+                    Boutique Helpline &amp; WhatsApp
                   </span>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300/70">
-                    Main Helpline
+                  <span className="text-[10px] font-bold text-rose-800 bg-rose-100/90 px-2 py-0.5 rounded-full border border-rose-300/70">
+                    Customer Care
                   </span>
                 </div>
-                <div className="flex items-center justify-between gap-2 bg-white/95 p-2 sm:p-2.5 rounded-xl border border-amber-200 shadow-xs">
+                <div className="flex items-center justify-between gap-2 bg-white/95 p-2 sm:p-2.5 rounded-xl border border-rose-200 shadow-xs">
                   <a
                     href={`tel:${displayPhone.replace(/\s+/g, '')}`}
-                    className="flex items-center gap-2.5 text-stone-900 hover:text-amber-800 transition-colors flex-1"
+                    className="flex items-center gap-2.5 text-stone-900 hover:text-rose-800 transition-colors flex-1"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-amber-600/30">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 to-pink-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-600/30">
                       <Phone className="w-4 h-4" />
                     </div>
                     <div>
                       <span className="text-base sm:text-lg font-black tracking-wide text-stone-900 block leading-tight">
                         {formatPhoneNumber(displayPhone)}
                       </span>
-                      <span className="text-[10px] text-amber-700 font-semibold block">
-                        Tap to call restaurant directly
+                      <span className="text-[10px] text-rose-700 font-semibold block">
+                        Tap to call boutique directly
                       </span>
                     </div>
                   </a>
@@ -452,7 +452,7 @@ export default function QuizFlow({
                 type="button"
                 onClick={handleStart}
                 disabled={isStarting}
-                className="inline-flex items-center justify-center w-full h-12 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-700 hover:to-amber-700 text-white font-bold shadow-lg shadow-amber-600/25 group transition-all duration-200 cursor-pointer text-sm sm:text-base active:scale-[0.98] disabled:opacity-80"
+                className="inline-flex items-center justify-center w-full h-12 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-amber-500 hover:from-rose-700 hover:to-amber-600 text-white font-bold shadow-lg shadow-rose-600/25 group transition-all duration-200 cursor-pointer text-sm sm:text-base active:scale-[0.98] disabled:opacity-80"
               >
                 {isStarting ? (
                   <>
@@ -468,7 +468,7 @@ export default function QuizFlow({
               </button>
 
               <p className="text-[11px] text-stone-400">
-                Your authentic feedback helps the chef and team serve you better.
+                Your authentic feedback helps our styling team curate better collections for you.
               </p>
             </div>
           </div>

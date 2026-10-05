@@ -11,54 +11,54 @@ export interface GenerationResult {
  * Deterministic sentence banks seeded by session_id to satisfy CG-7 (anti-repetition).
  */
 const OVERALL_POSITIVE = [
-  'Had a really pleasant visit here today.',
-  'Really enjoyed my dining experience at this place.',
-  'Had a great time visiting today.',
-  'Wonderful experience dining here today.',
+  'Had a really wonderful shopping experience here today.',
+  'Really enjoyed browsing and shopping the collection today.',
+  'Had a lovely time visiting this boutique today.',
+  'A truly delightful boutique experience shopping here today.',
 ]
 
 const OVERALL_NEUTRAL = [
-  'Visited here today for a meal.',
-  'Stopped by for dining today.',
-  'An okay visit overall today.',
+  'Visited here today to browse the collection.',
+  'Stopped by for boutique shopping today.',
+  'An okay shopping visit overall today.',
 ]
 
 const OVERALL_NEGATIVE = [
-  'Visited here today, but the visit was disappointing.',
-  'Dined here today, though the overall visit fell short.',
-  'Stopped by today, but my experience was not as expected.',
+  'Visited here today, but the shopping experience was disappointing.',
+  'Shopped here today, though the overall visit fell short of expectations.',
+  'Stopped by today, but my visit was not as expected.',
 ]
 
 const FOOD_POSITIVE = [
-  'The food was very flavorful and fresh.',
-  'Really enjoyed the flavors and quality of the dishes.',
-  'The dishes were prepared well and tasted good.',
+  'The clothing collection was trendy, elegant, and of great quality.',
+  'Really loved the beautiful designs and fabric finish.',
+  'The outfits were stylish, comfortable, and beautifully crafted.',
 ]
 
 const FOOD_NEUTRAL = [
-  'The food was acceptable and decent.',
-  'The meal was okay and met standard expectations.',
+  'The collection was decent with standard designs.',
+  'The styles were okay and met basic expectations.',
 ]
 
 const FOOD_NEGATIVE = [
-  'The food was lacking flavor and did not meet expectations.',
-  'The dishes served were disappointing in taste.',
+  'The collection lacked variety and fabric quality did not meet expectations.',
+  'The designs available were disappointing.',
 ]
 
 const SERVICE_POSITIVE = [
-  'The staff was polite and attentive throughout.',
-  'Service was friendly and promptly delivered.',
-  'The hospitality was warm and accommodating.',
+  'The staff was polite, patient, and very helpful with trials and styling.',
+  'Customer service was warm, attentive, and welcoming throughout.',
+  'The styling assistance was courteous and pleasant.',
 ]
 
 const SERVICE_NEUTRAL = [
-  'Service was standard and adequate.',
-  'Staff attended to our table without delay.',
+  'Customer service was standard and adequate.',
+  'Staff was polite and available when needed.',
 ]
 
 const SERVICE_NEGATIVE = [
-  'The service was quite slow and needed more attention.',
-  'Staff could have been more attentive and responsive.',
+  'The staff was inattentive and could have been more helpful.',
+  'Customer assistance was slow and needed more attention.',
 ]
 
 function getSeededIndex(seed: string, length: number): number {
@@ -83,7 +83,7 @@ export function generateDeterministicDraft(factSheet: FactSheet, sessionId: stri
     sentences.push(OVERALL_NEGATIVE[getSeededIndex(sessionId + '-ov', OVERALL_NEGATIVE.length)])
   }
 
-  // 2. Food Sentence
+  // 2. Collection / Fabric Sentence
   const foodTone = factSheet.food?.tone || 'positive'
   if (foodTone === 'positive') {
     sentences.push(FOOD_POSITIVE[getSeededIndex(sessionId + '-fd', FOOD_POSITIVE.length)])
@@ -93,16 +93,16 @@ export function generateDeterministicDraft(factSheet: FactSheet, sessionId: stri
     sentences.push(FOOD_NEGATIVE[getSeededIndex(sessionId + '-fd', FOOD_NEGATIVE.length)])
   }
 
-  // 3. Dishes ordered or compliments liked
+  // 3. Items browsed or compliments liked
   if (factSheet.ordered.length > 0 && foodTone === 'positive') {
-    const dishes = factSheet.ordered.slice(0, 2).join(' and ')
-    sentences.push(`The ${dishes} stood out during our meal.`)
+    const items = factSheet.ordered.slice(0, 2).join(' and ')
+    sentences.push(`The ${items} especially stood out.`)
   } else if (factSheet.liked.length > 0 && overallTone === 'positive') {
     const aspects = factSheet.liked.slice(0, 2).join(' and ')
     sentences.push(`We especially appreciated the ${aspects}.`)
   }
 
-  // 4. Service Sentence
+  // 4. Service / Styling Sentence
   const serviceTone = factSheet.service?.tone || 'positive'
   if (serviceTone === 'positive') {
     sentences.push(SERVICE_POSITIVE[getSeededIndex(sessionId + '-sv', SERVICE_POSITIVE.length)])
@@ -121,12 +121,12 @@ export function generateDeterministicDraft(factSheet: FactSheet, sessionId: stri
  * Each angle still only uses facts from the Fact Sheet.
  */
 const STYLE_ANGLES = [
-  'Open with the dish that impressed you most, then mention service briefly.',
-  'Open with the overall feeling of the visit, then highlight one specific detail.',
-  'Start with the occasion or company (family dinner, friends, team lunch), then describe food and service.',
-  'Open with the hospitality and service, then describe the food.',
-  'Start with a standout flavor or specific dish, then zoom out to the overall experience.',
-  'Open with ambience and comfort, then cover food quality and staff behavior.',
+  'Open with the outfit or collection that caught your eye, then mention staff assistance.',
+  'Open with the overall boutique ambience and feeling, then highlight fabric quality.',
+  'Start with shopping for an occasion (festive, wedding, party wear, daily chic), then describe the clothing and service.',
+  'Open with the warm styling assistance and trial room comfort, then describe the designs.',
+  'Start with a standout piece or fabric quality, then zoom out to the overall shopping experience.',
+  'Open with boutique elegance, then cover apparel fit, variety, and polite staff behavior.',
 ]
 
 function pickAngle(): string {
@@ -162,7 +162,7 @@ export async function generateReviewDraft(
 
         const angle = pickAngle()
         const variationSeed = Math.random().toString(36).slice(2, 10)
-        const prompt = `You are helping a restaurant customer write a brief, authentic review draft for ${restaurantName}.
+        const prompt = `You are helping a customer write a brief, authentic Google review draft for ${restaurantName}, an exclusive women's clothing and fashion boutique.
 STRICT RULES:
 1. Write in the first person ("I" / "We").
 2. Length MUST be between 30 and 70 words.
@@ -171,7 +171,7 @@ ${JSON.stringify(factSheet, null, 2)}
 4. Preserve sentiment: negative ratings MUST sound polite but dissatisfied; positive ratings must sound pleased.
 5. Do NOT include staff names, prices, promotional offers, discounts, star ratings (e.g. "5 stars"), URLs, or hashtags.
 6. Narrative angle for THIS review: ${angle}
-7. Variation seed "${variationSeed}": phrase everything in fresh, unique wording. Do NOT reuse generic openers like "Had a wonderful dining experience".
+7. Variation seed "${variationSeed}": phrase everything in fresh, unique boutique wording. Do NOT reuse generic openers like "Had a wonderful dining experience".
 8. Return plain text only without markdown formatting or quotation marks.`
 
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {

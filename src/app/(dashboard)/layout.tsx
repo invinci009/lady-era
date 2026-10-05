@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Sparkles, LayoutDashboard, QrCode, MessageSquare, Utensils, Settings, LogOut, Users } from 'lucide-react'
+import { Sparkles, LayoutDashboard, QrCode, MessageSquare, ShoppingBag, Settings, LogOut, Users } from 'lucide-react'
 import { getRestaurantConfig } from '@/config/loader'
 import { getBrandingTokens } from '@/config/branding'
 import type { AuthUser } from '@/lib/firebase/auth'
@@ -58,7 +58,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <div className="flex flex-col">
                 <span className="font-bold text-base text-white tracking-tight leading-tight">{config.name}</span>
                 <span className="text-[10px] font-semibold leading-none" style={{ color: branding.primary }}>
-                  ReviewPulse Portal
+                  Boutique Portal
                 </span>
               </div>
             </Link>
@@ -96,8 +96,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 href="/dashboard?tab=menu"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 font-medium transition-colors"
               >
-                <Utensils className="w-4 h-4 text-emerald-400" />
-                Menu
+                <ShoppingBag className="w-4 h-4 text-pink-400" />
+                Collections
               </Link>
               <Link
                 href="/dashboard?tab=settings"

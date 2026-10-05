@@ -1,13 +1,14 @@
-// ReviewPulse PWA Service Worker
-const CACHE_VERSION = 'rp-v2'
-const STATIC_CACHE = `rp-static-${CACHE_VERSION}`
-const DYNAMIC_CACHE = `rp-dynamic-${CACHE_VERSION}`
+// ReviewPulse PWA Service Worker — Lady's Era
+const CACHE_VERSION = 'ladys-era-v5'
+const STATIC_CACHE = `ladys-era-static-${CACHE_VERSION}`
+const DYNAMIC_CACHE = `ladys-era-dynamic-${CACHE_VERSION}`
 
 const PRECACHE_ASSETS = [
   '/',
   '/offline',
   '/manifest.webmanifest',
   '/favicon.ico',
+  '/ladys-era-logo.png',
   '/icons/icon.svg',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
@@ -17,20 +18,20 @@ const PRECACHE_ASSETS = [
 
 // Install Event: Pre-cache static shell & offline fallback
 self.addEventListener('install', (event) => {
+  self.skipWaiting()
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
       .then((cache) => {
         return cache.addAll(PRECACHE_ASSETS)
       })
-      .then(() => self.skipWaiting())
       .catch((err) => {
         console.warn('[SW] Pre-cache error:', err)
       })
   )
 })
 
-// Activate Event: Clear outdated caches and claim clients immediately
+// Activate Event: Clear ALL outdated caches (including old rp-* caches) immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
@@ -117,22 +118,19 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('.ico') ||
     url.pathname.endsWith('.woff2')
   ) {
+    // Network-First with cache fallback so fresh bundles and assets load immediately
     event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached
-
-        return fetch(request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              const clone = networkResponse.clone()
-              caches.open(STATIC_CACHE).then((cache) => {
-                cache.put(request, clone)
-              })
-            }
-            return networkResponse
-          })
-          .catch(() => cached || Response.error())
-      })
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone()
+            caches.open(STATIC_CACHE).then((cache) => {
+              cache.put(request, clone)
+            })
+          }
+          return networkResponse
+        })
+        .catch(() => caches.match(request))
     )
     return
   }

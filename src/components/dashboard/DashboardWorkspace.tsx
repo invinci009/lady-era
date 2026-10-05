@@ -18,7 +18,7 @@ import {
   QrCode,
   MessageSquare,
   MessageSquareHeart,
-  Utensils,
+  ShoppingBag,
   Settings,
   Sparkles,
   Users,
@@ -110,7 +110,7 @@ export default function DashboardWorkspace({
       icon: MessageSquareHeart,
       badge: feedbackList.length > 0 ? feedbackList.length : undefined,
     },
-    { key: 'menu', label: 'Menu', icon: Utensils, badge: menuItems.length },
+    { key: 'menu', label: 'Collections', icon: ShoppingBag, badge: menuItems.length },
     { key: 'settings', label: 'Settings', icon: Settings },
   ]
 
@@ -129,17 +129,17 @@ export default function DashboardWorkspace({
               </span>
             </div>
             <p className="text-xs text-slate-400 truncate max-w-xl">
-              {business.location ? `${business.location} • ` : ''}Restaurant Management &amp; Analytics
+              {business.location ? `${business.location} • ` : ''}Exclusive Boutique Management &amp; Analytics
             </p>
           </div>
 
           {/* Quick Action Buttons for Mobile / Tablet */}
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            {/* Live Survey Guest Preview */}
+            {/* Live Survey Shopper Preview */}
             <Link
               href={campaigns[0]?.slug ? `/r/${campaigns[0].slug}` : `/r/${config.slug}`}
               target="_blank"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors shadow-xs active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors shadow-xs active:scale-95"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span>Live Survey</span>
@@ -150,7 +150,7 @@ export default function DashboardWorkspace({
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white text-xs font-bold shadow-md shadow-amber-600/20 transition-all cursor-pointer active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all cursor-pointer active:scale-95"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Install App</span>
@@ -187,7 +187,7 @@ export default function DashboardWorkspace({
                 onClick={() => handleTabChange(tab.key)}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 shrink-0 ${
                   isActive
-                    ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 text-white shadow-md shadow-amber-600/25 font-bold'
+                    ? 'bg-gradient-to-r from-rose-600 via-rose-500 to-pink-600 text-white shadow-md shadow-rose-600/25 font-bold'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                 }`}
               >

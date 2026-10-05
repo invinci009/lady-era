@@ -1,31 +1,35 @@
 {
-  "name": "Maa Parvati Restaurant",
-  "slug": "maa-parvati-restaurant",
-  "hindiName": "माँ पार्वती रेस्टोरेंट",
-  "cuisine": "Authentic Indian & Family Dining",
-  "tagline": "Special Family Dining",
+  "name": "Lady’s Era",
+  "slug": "ladys-era",
+  "hindiName": "लेडीज़ इरा",
+  "category": "Exclusive Women's Wear & Designer Boutique",
+  "tagline": "Exclusive Women's Fashion & Boutique",
   "contact": {
-    "phone": "+919334058472",
-    "helpline": "+919334058472",
-    "email": "contact@maaparvati.com"
+    "phone": "+917484870260",
+    "helpline": "+917484870260",
+    "email": ""
   },
   "location": {
-    "address": "Maurya Path, Jyotipuram Colony, Khajpura",
-    "area": "Khajpura",
+    "address": "Arsh Market, Ground Floor, Anisabad-Khagaul Road, Near Mahavir Cancer Sansthan & Sushil Plaza Cinema Hall, Phulwarisharif",
+    "area": "Phulwarisharif",
     "city": "Patna",
     "state": "Bihar",
-    "pincode": "800014",
     "country": "India"
   },
   "google": {
-    "reviewUrl": "https://search.google.com/local/writereview?placeid=ChIJnzs647lX7TkR6DCoOq2uHcg"
+    "placeId": "ChIJu6Jvojep8jkROH9r22RNecc",
+    "reviewUrl": "https://search.google.com/local/writereview?placeid=ChIJu6Jvojep8jkROH9r22RNecc"
+  },
+  "social": {
+    "instagram": "https://www.instagram.com/ladysera_phulwarisharif_patna?stkn=aTdkZ25vdXRybXMx",
+    "facebook": "https://www.facebook.com/share/1dCiFQHFeH/?mibextid=wwXIfr"
   },
   "branding": {
-    "logoUrl": "https://storage.googleapis.com/maa-parvati.firebasestorage.app/branding/logo.png",
-    "faviconUrl": "https://storage.googleapis.com/maa-parvati.firebasestorage.app/branding/favicon.ico",
-    "primaryColor": "#d97706",
-    "secondaryColor": "#1e293b",
-    "accentColor": "#f59e0b"
+    "logoUrl": "/ladys-era-logo.png",
+    "faviconUrl": "/ladys-era-logo.png",
+    "primaryColor": "#e11d48",
+    "secondaryColor": "#09090b",
+    "accentColor": "#f43f5e"
   },
   "features": {
     "aiReviews": true,
@@ -45,7 +49,7 @@
     "timezone": "Asia/Kolkata"
   },
   "welcomeMessage": {
-    "en": "Thanks for dining with Maa Parvati Restaurant! We'd love to hear about your experience today.",
-    "hi": "माँ पार्वती रेस्टोरेंट में भोजन करने के लिए धन्यवाद! हम आज आपके अनुभव के बारे में जानना चाहते हैं।"
+    "en": "Thanks for visiting Lady’s Era! We'd love to hear about your experience today.",
+    "hi": "लेडीज़ इरा में पधारने के लिए धन्यवाद! हम आज आपके शॉपिंग अनुभव के बारे में जानने के लिए उत्सुक हैं।"
   }
 }

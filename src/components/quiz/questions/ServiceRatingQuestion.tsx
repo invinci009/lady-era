@@ -11,7 +11,7 @@ const SERVICE_OPTIONS = [
   {
     rating: 1,
     label: 'Poor',
-    desc: 'Slow, inattentive, or unhelpful',
+    desc: 'Unhelpful or inattentive staff',
     icon: Frown,
     activeBorder: 'border-rose-400',
     activeBg: 'bg-rose-50',
@@ -24,7 +24,7 @@ const SERVICE_OPTIONS = [
   {
     rating: 2,
     label: 'Fair',
-    desc: 'Could be friendlier or faster',
+    desc: 'Could be friendlier or more patient',
     icon: Meh,
     activeBorder: 'border-amber-400',
     activeBg: 'bg-amber-50',
@@ -37,7 +37,7 @@ const SERVICE_OPTIONS = [
   {
     rating: 3,
     label: 'Good',
-    desc: 'Attentive & met expectations',
+    desc: 'Helpful, polite & met expectations',
     icon: Smile,
     activeBorder: 'border-stone-400',
     activeBg: 'bg-stone-100',
@@ -50,7 +50,7 @@ const SERVICE_OPTIONS = [
   {
     rating: 4,
     label: 'Very Good',
-    desc: 'Warm, attentive, and helpful',
+    desc: 'Warm, attentive, and great suggestions',
     icon: Heart,
     activeBorder: 'border-emerald-400',
     activeBg: 'bg-emerald-50',
@@ -62,16 +62,16 @@ const SERVICE_OPTIONS = [
   },
   {
     rating: 5,
-    label: 'Royal & Excellent',
-    desc: 'Outstanding hospitality & care',
+    label: 'Royal & Exceptional',
+    desc: 'Personal styling, VIP care & fabulous service',
     icon: Crown,
-    activeBorder: 'border-amber-500',
-    activeBg: 'bg-gradient-to-r from-amber-50 via-amber-100/40 to-amber-50',
-    badgeActive: 'bg-gradient-to-tr from-amber-600 to-yellow-600 text-white font-bold shadow-md shadow-amber-500/20',
-    badgeInactive: 'bg-amber-50 text-amber-900 border border-amber-200',
-    labelActive: 'text-amber-950 font-bold',
+    activeBorder: 'border-rose-500',
+    activeBg: 'bg-gradient-to-r from-rose-50 via-pink-100/40 to-rose-50',
+    badgeActive: 'bg-gradient-to-tr from-rose-600 via-pink-600 to-amber-500 text-white font-bold shadow-md shadow-rose-500/20',
+    badgeInactive: 'bg-rose-50 text-rose-900 border border-rose-200',
+    labelActive: 'text-rose-950 font-bold',
     labelInactive: 'text-stone-800',
-    indicatorActive: 'border-amber-600 bg-amber-600 text-white',
+    indicatorActive: 'border-rose-600 bg-rose-600 text-white',
   },
 ]
 
@@ -97,23 +97,23 @@ export default function ServiceRatingQuestion({ value, onChange }: ServiceRating
   return (
     <div className="space-y-6 text-center animate-in fade-in slide-in-from-bottom-3 duration-300">
       <div className="space-y-2.5">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
-          <span className="text-[11px] font-semibold tracking-wider uppercase text-amber-900">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
+          <span className="text-[11px] font-semibold tracking-wider uppercase text-rose-900">
             Question 3 of 6
           </span>
           <span className="text-stone-300">•</span>
-          <span className="text-[11px] text-amber-800 font-medium">Required</span>
+          <span className="text-[11px] text-rose-800 font-medium">Required</span>
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
           How was the{' '}
-          <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-yellow-600 bg-clip-text text-transparent">
-            hospitality &amp; service
+          <span className="bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 bg-clip-text text-transparent">
+            styling &amp; service
           </span>
           ?
         </h2>
         <p className="text-sm text-stone-600">
-          Staff friendliness, attentiveness, and order speed
+          Staff friendliness, attentiveness, patience, and styling guidance
         </p>
       </div>
 
