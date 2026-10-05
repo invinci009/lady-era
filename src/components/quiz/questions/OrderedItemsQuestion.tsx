@@ -53,7 +53,7 @@ export default function OrderedItemsQuestion({
           ?
         </h2>
         <p className="text-sm text-stone-600">
-          Select dishes, biryani, or breads you enjoyed today
+          Select dishes or items you enjoyed today
         </p>
       </div>
 

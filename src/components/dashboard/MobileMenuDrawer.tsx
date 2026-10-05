@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePwa } from '@/components/pwa/PwaProvider'
+import { useClientConfig } from '@/config/client'
 import type { TabType } from './DashboardWorkspace'
 
 interface MobileMenuDrawerProps {
@@ -41,6 +42,8 @@ export default function MobileMenuDrawer({
   restaurantLocation,
 }: MobileMenuDrawerProps) {
   const { isInstalled, isInstallable, isIOS, setShowInstallModal, promptInstall } = usePwa()
+  const { config } = useClientConfig()
+  const activeSlug = config.slug || 'survey'
 
   if (!isOpen) return null
 
@@ -59,7 +62,7 @@ export default function MobileMenuDrawer({
   }
 
   const handleShareSurvey = async () => {
-    const surveyUrl = `${window.location.origin}/r/pm-zaika`
+    const surveyUrl = `${window.location.origin}/r/${activeSlug}`
     if (navigator.share) {
       try {
         await navigator.share({
@@ -88,14 +91,20 @@ export default function MobileMenuDrawer({
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-500 flex items-center justify-center text-white font-extrabold shadow-md shadow-amber-600/25 text-xs tracking-wider">
-              PMZ
+              {(restaurantName || config.name || 'RP')
+                .split(' ')
+                .map((w) => w[0])
+                .filter(Boolean)
+                .slice(0, 3)
+                .join('')
+                .toUpperCase()}
             </div>
             <div>
               <h2 className="text-base font-bold text-white tracking-tight leading-tight">
-                {restaurantName}
+                {restaurantName || config.name}
               </h2>
               <p className="text-[11px] text-slate-400">
-                {restaurantLocation || 'Patna'} • Management Portal
+                {restaurantLocation || config.location?.city || 'Patna'} • Management Portal
               </p>
             </div>
           </div>
@@ -234,7 +243,7 @@ export default function MobileMenuDrawer({
 
           <div className="grid grid-cols-2 gap-2">
             <Link
-              href="/r/pm-zaika"
+              href={`/r/${activeSlug}`}
               target="_blank"
               onClick={onClose}
               className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 flex flex-col items-center justify-center text-center gap-1.5 hover:bg-slate-800/60 transition-colors"

@@ -271,7 +271,7 @@ export default function SettingsTab({
                   id="sLoc"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Shershah Road, Gur ki Mandi, Gulzarbagh, Patna"
+                  placeholder="e.g. 123 Main Street, City"
                   className="bg-slate-950/60 border-slate-800 text-white h-10 text-xs rounded-xl"
                 />
               </div>
@@ -291,7 +291,7 @@ export default function SettingsTab({
                     id="sPhone"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="7488260572"
+                    placeholder="e.g. 9876543210"
                     className="bg-slate-950/60 border-slate-800 text-white h-10 text-xs rounded-xl"
                   />
                   <p className="text-[10px] text-slate-400">
@@ -307,7 +307,7 @@ export default function SettingsTab({
                     id="sSecPhone"
                     value={secondaryPhone}
                     onChange={(e) => setSecondaryPhone(e.target.value)}
-                    placeholder="06123112128, 9525748843"
+                    placeholder="e.g. 0612XXXXXX, 98XXXXXXXX"
                     className="bg-slate-950/60 border-slate-800 text-white h-10 text-xs rounded-xl"
                   />
                   <p className="text-[10px] text-slate-400">
@@ -397,8 +397,8 @@ export default function SettingsTab({
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Aliases supported for login: <strong className="text-slate-300">admin</strong>,{' '}
                   <strong className="text-slate-300">owner</strong>,{' '}
-                  <strong className="text-slate-300">zaika</strong>,{' '}
-                  <strong className="text-slate-300">pmzaika</strong>
+                  <strong className="text-slate-300">manager</strong>,{' '}
+                  <strong className="text-slate-300">staff</strong>
                 </p>
               </div>
             </div>

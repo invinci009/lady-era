@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { X, Send, Loader2, ShieldCheck, CheckCircle2, AlertCircle, Phone } from 'lucide-react'
 import { trackClientEvent } from '@/lib/client/telemetry'
+import { useClientConfig } from '@/config/client'
 
 interface PrivateFeedbackModalProps {
   isOpen: boolean
@@ -26,6 +27,8 @@ export default function PrivateFeedbackModal({
   sessionId,
   restaurantName,
 }: PrivateFeedbackModalProps) {
+  const { config, helplinePhone } = useClientConfig()
+  const activePhone = helplinePhone || config.contact?.phone || ''
   const [category, setCategory] = useState<string>('food')
   const [message, setMessage] = useState('')
   const [contactName, setContactName] = useState('')
@@ -104,15 +107,17 @@ export default function PrivateFeedbackModal({
               <p className="text-xs text-stone-500">
                 This message goes directly to the restaurant leadership, not Google.
               </p>
-              <div className="flex items-center justify-between p-2 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 mt-2">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <Phone className="w-3.5 h-3.5 text-amber-700" />
-                  Urgent? Call manager directly:
-                </span>
-                <a href="tel:7488260572" className="font-bold underline hover:text-amber-700">
-                  +91 7488260572
-                </a>
-              </div>
+              {activePhone && (
+                <div className="flex items-center justify-between p-2 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 mt-2">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Phone className="w-3.5 h-3.5 text-amber-700" />
+                    Urgent? Call manager directly:
+                  </span>
+                  <a href={`tel:${activePhone.replace(/\s+/g, '')}`} className="font-bold underline hover:text-amber-700">
+                    {activePhone}
+                  </a>
+                </div>
+              )}
             </div>
 
             {error && (

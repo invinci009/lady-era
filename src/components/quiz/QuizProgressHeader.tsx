@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowLeft, Utensils, Phone } from 'lucide-react'
+import { useClientConfig } from '@/config/client'
 
 interface QuizProgressHeaderProps {
   restaurantName: string
@@ -19,7 +20,11 @@ export default function QuizProgressHeader({
   onBack,
   canGoBack,
 }: QuizProgressHeaderProps) {
+  const { config, helplinePhone } = useClientConfig()
   const progressPercent = Math.round(((currentStep) / totalSteps) * 100)
+  const displayName = restaurantName || config.name || 'Restaurant'
+  const displaySubtext = config.hindiName || config.cuisine || 'Guest Feedback'
+  const activePhone = helplinePhone || config.contact?.phone || ''
 
   return (
     <div className="w-full max-w-lg mx-auto space-y-3">
@@ -41,30 +46,32 @@ export default function QuizProgressHeader({
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-500 text-white flex items-center justify-center font-bold text-xs overflow-hidden shrink-0 shadow-sm border border-amber-300">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={restaurantName} className="w-full h-full object-cover" />
+                <img src={logoUrl} alt={displayName} className="w-full h-full object-cover" />
               ) : (
                 <Utensils className="w-4 h-4" />
               )}
             </div>
             <div>
               <span className="text-sm font-bold text-stone-900 truncate block max-w-[180px] sm:max-w-xs">
-                {restaurantName || 'PM Zaika Restaurant'}
+                {displayName}
               </span>
-              <span className="text-[10px] text-amber-800 font-semibold block">पीएम ज़ायका रेस्टोरेंट</span>
+              <span className="text-[10px] text-amber-800 font-semibold block">{displaySubtext}</span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <a
-            href="tel:7488260572"
-            className="flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-full border border-amber-300 transition-colors shadow-2xs"
-            title="Helpline: +91 7488260572"
-          >
-            <Phone className="w-3 h-3 text-amber-700" />
-            <span className="hidden sm:inline">Call:</span>
-            <span>7488260572</span>
-          </a>
+          {activePhone && (
+            <a
+              href={`tel:${activePhone.replace(/\s+/g, '')}`}
+              className="flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-full border border-amber-300 transition-colors shadow-2xs"
+              title={`Helpline: ${activePhone}`}
+            >
+              <Phone className="w-3 h-3 text-amber-700" />
+              <span className="hidden sm:inline">Call:</span>
+              <span>{activePhone}</span>
+            </a>
+          )}
           <div className="text-xs font-semibold text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full border border-stone-200">
             Step <span className="text-amber-800 font-bold">{currentStep}</span> of {totalSteps}
           </div>

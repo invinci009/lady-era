@@ -19,6 +19,7 @@ import {
   Sparkles,
   Smartphone,
 } from 'lucide-react'
+import { useClientConfig } from '@/config/client'
 
 export interface CampaignItem {
   id: string
@@ -34,6 +35,7 @@ interface CampaignsTabProps {
 }
 
 export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps) {
+  const { restaurantName } = useClientConfig()
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newCampaignName, setNewCampaignName] = useState('')
@@ -123,7 +125,7 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Generate and manage tabletop QR codes, bill inserts, and counter stands for PM Zaika Restaurant
+            Generate and manage tabletop QR codes, bill inserts, and counter stands for {restaurantName}
           </p>
         </div>
 
@@ -264,7 +266,7 @@ export default function CampaignsTab({ campaigns, onRefresh }: CampaignsTabProps
             <QrCode className="w-10 h-10 mx-auto text-slate-600" />
             <div className="space-y-1">
               <p className="text-base font-bold text-white">No QR Campaigns Found</p>
-              <p className="text-xs text-slate-400">Click &ldquo;New QR Campaign&rdquo; above to generate a QR code for PM Zaika Restaurant.</p>
+              <p className="text-xs text-slate-400">Click &ldquo;New QR Campaign&rdquo; above to generate a QR code for {restaurantName}.</p>
             </div>
           </div>
         )}

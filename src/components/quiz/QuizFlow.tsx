@@ -60,12 +60,24 @@ export default function QuizFlow({
   const [pendingSync, setPendingSync] = useState<{ key: string; value: QuizAnswerValue } | null>(null)
   const [phoneCopied, setPhoneCopied] = useState(false)
 
-  const { helplinePhone } = useClientConfig()
+  const { config, helplinePhone } = useClientConfig()
+  const displayPhone = helplinePhone || config.contact?.phone || ''
+
+  const formatPhoneNumber = (num: string): string => {
+    const cleaned = num.trim()
+    if (cleaned.startsWith('+91') && cleaned.length === 13) {
+      return `+91 ${cleaned.slice(3, 8)} ${cleaned.slice(8)}`
+    }
+    if (cleaned.length === 10 && /^\d+$/.test(cleaned)) {
+      return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`
+    }
+    return cleaned
+  }
 
   const handleCopyPhone = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (navigator.clipboard && helplinePhone) {
-      navigator.clipboard.writeText(helplinePhone)
+    if (navigator.clipboard && displayPhone) {
+      navigator.clipboard.writeText(displayPhone)
       setPhoneCopied(true)
       setTimeout(() => setPhoneCopied(false), 2500)
     }
@@ -298,88 +310,118 @@ export default function QuizFlow({
             {/* Restaurant Name & Subtitle */}
             <div className="space-y-1.5">
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-                {restaurantName || 'PM Zaika Restaurant'}
+                {restaurantName || config.name || 'Restaurant'}
               </h1>
-              <p className="text-sm font-semibold text-amber-800">
-                पीएम ज़ायका रेस्टोरेंट • Authentic Biryani & Chinese
-              </p>
+              {(config.hindiName || config.cuisine) && (
+                <p className="text-sm font-semibold text-amber-800">
+                  {[config.hindiName, config.cuisine].filter(Boolean).join(' • ')}
+                </p>
+              )}
               <div className="pt-1 flex items-center justify-center gap-2 text-xs text-stone-500">
                 <span className="flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60">
-                  <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> 4.5 • Zaika Special Dining
+                  <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> 4.8 • {config.tagline || 'Special Dining'}
                 </span>
                 <span>•</span>
-                <span>Gulzarbagh, Patna</span>
+                <span>
+                  {config.location?.area
+                    ? `${config.location.area}, ${config.location.city || 'Patna'}`
+                    : config.location?.city || 'Patna'}
+                </span>
               </div>
             </div>
 
             {/* Prominent Customer Contact Box (Main Phone Display for Customers) */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/60 to-yellow-50 border border-amber-300 shadow-sm space-y-2 text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-extrabold tracking-wider text-amber-950 uppercase flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
-                  Restaurant Contact & Orders
-                </span>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300/70">
-                  Main Helpline
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2 bg-white/95 p-2 sm:p-2.5 rounded-xl border border-amber-200 shadow-xs">
-                <a
-                  href="tel:7488260572"
-                  className="flex items-center gap-2.5 text-stone-900 hover:text-amber-800 transition-colors flex-1"
-                >
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-amber-600/30">
-                    <Phone className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-base sm:text-lg font-black tracking-wide text-stone-900 block leading-tight">
-                      +91 74882 60572
-                    </span>
-                    <span className="text-[10px] text-amber-700 font-semibold block">
-                      Tap to call restaurant directly
-                    </span>
-                  </div>
-                </a>
-                <button
-                  type="button"
-                  onClick={handleCopyPhone}
-                  className="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer border border-stone-200"
-                  title="Copy number"
-                >
-                  {phoneCopied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-emerald-700 font-bold text-[11px]">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-stone-500" />
-                      <span className="text-[11px]">Copy</span>
-                    </>
-                  )}
-                </button>
-              </div>
-              {/* Other Contact Numbers */}
-              <div className="flex items-center justify-between text-[10px] text-stone-600 px-1 pt-0.5">
-                <span className="text-stone-500">Other Lines:</span>
-                <div className="flex items-center gap-2">
-                  <a href="tel:06123112128" className="hover:text-amber-800 font-semibold hover:underline">0612-3112128</a>
-                  <span>•</span>
-                  <a href="tel:9525748843" className="hover:text-amber-800 font-semibold hover:underline">9525748843</a>
+            {displayPhone && (
+              <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/60 to-yellow-50 border border-amber-300 shadow-sm space-y-2 text-left">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold tracking-wider text-amber-950 uppercase flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
+                    Restaurant Contact & Orders
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300/70">
+                    Main Helpline
+                  </span>
                 </div>
+                <div className="flex items-center justify-between gap-2 bg-white/95 p-2 sm:p-2.5 rounded-xl border border-amber-200 shadow-xs">
+                  <a
+                    href={`tel:${displayPhone.replace(/\s+/g, '')}`}
+                    className="flex items-center gap-2.5 text-stone-900 hover:text-amber-800 transition-colors flex-1"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-amber-600/30">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-base sm:text-lg font-black tracking-wide text-stone-900 block leading-tight">
+                        {formatPhoneNumber(displayPhone)}
+                      </span>
+                      <span className="text-[10px] text-amber-700 font-semibold block">
+                        Tap to call restaurant directly
+                      </span>
+                    </div>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleCopyPhone}
+                    className="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer border border-stone-200"
+                    title="Copy number"
+                  >
+                    {phoneCopied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700 font-bold text-[11px]">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-stone-500" />
+                        <span className="text-[11px]">Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                {/* Other Contact Numbers if provided in config */}
+                {config.contact?.otherPhones && config.contact.otherPhones.length > 0 && (
+                  <div className="flex items-center justify-between text-[10px] text-stone-600 px-1 pt-0.5">
+                    <span className="text-stone-500">Other Lines:</span>
+                    <div className="flex items-center gap-2">
+                      {config.contact.otherPhones.map((ph, idx) => (
+                        <span key={ph} className="flex items-center gap-2">
+                          {idx > 0 && <span>•</span>}
+                          <a
+                            href={`tel:${ph.replace(/\s+/g, '')}`}
+                            className="hover:text-amber-800 font-semibold hover:underline"
+                          >
+                            {ph}
+                          </a>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             {/* Address Pill */}
-            <div className="p-3 rounded-2xl bg-stone-50/90 border border-stone-200/90 text-left space-y-0.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-stone-900">
-                <MapPin className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                <span>Shershah Road, Gur ki Mandi, Patna</span>
+            {(config.location?.address || config.location?.city) && (
+              <div className="p-3 rounded-2xl bg-stone-50/90 border border-stone-200/90 text-left space-y-0.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-stone-900">
+                  <MapPin className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                  <span>{config.location.address || `${restaurantName}, ${config.location.city}`}</span>
+                </div>
+                {(config.location.landmark || config.location.area || config.location.city || config.location.pincode) && (
+                  <p className="text-[11px] text-stone-600 pl-5 leading-relaxed">
+                    {[
+                      config.location.landmark,
+                      config.location.area,
+                      config.location.city,
+                      config.location.state,
+                      config.location.pincode,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </p>
+                )}
               </div>
-              <p className="text-[11px] text-stone-600 pl-5 leading-relaxed">
-                Infront of Bank of India, PO - Gulzarbagh, Patna - 800007
-              </p>
-            </div>
+            )}
 
             {/* Welcome Message */}
             <p className="text-xs text-stone-600 leading-relaxed max-w-sm mx-auto">

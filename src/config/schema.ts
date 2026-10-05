@@ -49,19 +49,26 @@ export const restaurantConfigSchema = z.object({
     .min(2)
     .max(40)
     .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
+  hindiName: z.string().optional(),
+  cuisine: z.string().optional(),
+  tagline: z.string().optional(),
 
   // Contact information
   contact: z.object({
     phone: z.string().max(50).optional(),
     helpline: z.string().max(50).optional(),
+    otherPhones: z.array(z.string()).optional(),
     email: z.string().email().optional(),
   }),
 
   // Location
   location: z.object({
     address: z.string().max(500).optional(),
+    landmark: z.string().max(200).optional(),
+    area: z.string().max(100).optional(),
     city: z.string().max(100).optional(),
     state: z.string().max(100).optional(),
+    pincode: z.string().max(20).optional(),
     country: z.string().max(100).optional(),
   }),
 

@@ -3,8 +3,10 @@
 import { usePwa } from './PwaProvider'
 import { Download, Share, PlusSquare, X, Sparkles, Check, Smartphone } from 'lucide-react'
 import Image from 'next/image'
+import { useClientConfig } from '@/config/client'
 
 export default function PwaInstallPrompt() {
+  const { restaurantName } = useClientConfig()
   const {
     isInstallable,
     isInstalled,
@@ -64,7 +66,7 @@ export default function PwaInstallPrompt() {
               Install ReviewPulse
             </h2>
             <p className="text-xs text-slate-400">
-              PM Zaika Restaurant Feedback &amp; Portal
+              {restaurantName} Feedback &amp; Portal
             </p>
           </div>
         </div>

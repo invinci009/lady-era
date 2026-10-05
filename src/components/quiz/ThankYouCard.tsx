@@ -1,6 +1,7 @@
 'use client'
 
-import { Heart, RotateCcw, Calendar, ExternalLink, Sparkles, CheckCircle2, MapPin, Share2, Phone } from 'lucide-react'
+import { Heart, RotateCcw, Sparkles, CheckCircle2, MapPin, Share2, Phone } from 'lucide-react'
+import { useClientConfig } from '@/config/client'
 
 interface ThankYouCardProps {
   restaurantName: string
@@ -8,14 +9,26 @@ interface ThankYouCardProps {
 }
 
 export default function ThankYouCard({ restaurantName, slug }: ThankYouCardProps) {
+  const { config, helplinePhone } = useClientConfig()
+  const name = restaurantName || config.name || 'Restaurant'
+  const activePhone = helplinePhone || config.contact?.phone || ''
+
+  // Build directions URL from Google placeid in config or name + location
+  const placeIdMatch = config.google?.reviewUrl?.match(/placeid=([^&]+)/)
+  const placeId = placeIdMatch ? placeIdMatch[1] : null
+  const directionsUrl = placeId
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&query_place_id=${placeId}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${config.location?.address || config.location?.city || ''}`)}`
+
   const handleShare = async () => {
     if (typeof window === 'undefined') return
     const url = window.location.href
+    const shareAddress = config.location?.address ? ` on ${config.location.address}` : ''
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${restaurantName} — Authentic Dining Experience`,
-          text: `Check out ${restaurantName} on Shershah Road, Gur ki Mandi, Gulzarbagh, Patna!`,
+          title: `${name} — Authentic Dining Experience`,
+          text: `Check out ${name}${shareAddress}!`,
           url,
         })
       } catch {}
@@ -51,7 +64,7 @@ export default function ThankYouCard({ restaurantName, slug }: ThankYouCardProps
 
           <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-xs mx-auto">
             Your honest thoughts help the chef and team at{' '}
-            <strong className="text-stone-800 font-semibold">{restaurantName || 'PM Zaika Restaurant'}</strong> maintain
+            <strong className="text-stone-800 font-semibold">{name}</strong> maintain
             the highest culinary standard.
           </p>
         </div>
@@ -68,25 +81,27 @@ export default function ThankYouCard({ restaurantName, slug }: ThankYouCardProps
             </span>
           </div>
           <p className="text-xs text-stone-600 leading-relaxed">
-            Our management team and kitchen staff review every response to continually perfect our recipes, zaika delicacies, and hospitality. We look forward to hosting you again soon!
+            Our management team and kitchen staff review every response to continually perfect our recipes, delicious menu items, and hospitality. We look forward to hosting you again soon!
           </p>
         </div>
 
         {/* Customer Helpline & Quick Action Buttons */}
         <div className="space-y-2.5 pt-1">
           {/* Primary: Direct Call to Restaurant */}
-          <a
-            href="tel:7488260572"
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-bold shadow-lg shadow-amber-600/25 flex items-center justify-center gap-2 text-sm transition-all duration-200 cursor-pointer active:scale-95"
-          >
-            <Phone className="w-4 h-4" />
-            <span>Call Restaurant: +91 74882 60572</span>
-          </a>
+          {activePhone && (
+            <a
+              href={`tel:${activePhone.replace(/\s+/g, '')}`}
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-bold shadow-lg shadow-amber-600/25 flex items-center justify-center gap-2 text-sm transition-all duration-200 cursor-pointer active:scale-95"
+            >
+              <Phone className="w-4 h-4" />
+              <span>Call Restaurant: {activePhone}</span>
+            </a>
+          )}
 
           {/* Secondary Buttons Row */}
           <div className="grid grid-cols-2 gap-2">
             <a
-              href="https://www.google.com/maps/place/?q=place_id:ChIJ52esmZNf7TkRoznWIQnz7uo"
+              href={directionsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="h-11 px-3 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200/90 text-stone-700 hover:text-stone-900 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"

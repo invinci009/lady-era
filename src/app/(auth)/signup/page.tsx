@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-// Registration is disabled — this is a single-tenant app for PM Zaika Restaurant only.
+// Registration is disabled — this is a single-tenant white-label app.
 export default function SignupPage() {
   redirect('/login')
 }

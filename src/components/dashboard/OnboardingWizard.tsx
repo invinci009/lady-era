@@ -7,16 +7,25 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Utensils, ArrowRight, Loader2, Sparkles, ShieldCheck, CheckCircle2 } from 'lucide-react'
+import { useClientConfig } from '@/config/client'
 
 export default function OnboardingWizard() {
   const router = useRouter()
+  const { config, restaurantName, helplinePhone } = useClientConfig()
   const [step, setStep] = useState(1)
-  const [name, setName] = useState('PM Zaika Restaurant')
-  const [location, setLocation] = useState('Shershah Road, Gur ki Mandi, Infront of Bank of India, PO - Gulzarbagh , Patna - 800007')
-  const [phone, setPhone] = useState('7488260572')
-  const [googleReviewUrl, setGoogleReviewUrl] = useState('')
+  const [name, setName] = useState(restaurantName || config.name || '')
+  const [location, setLocation] = useState(
+    config.location?.address
+      ? [config.location.address, config.location.area, config.location.city, config.location.state, config.location.pincode]
+          .filter(Boolean)
+          .join(', ')
+      : ''
+  )
+  const [phone, setPhone] = useState(helplinePhone || config.contact?.phone || '')
+  const [googleReviewUrl, setGoogleReviewUrl] = useState(config.google?.reviewUrl || '')
   const [welcomeMessage, setWelcomeMessage] = useState(
-    'Welcome to PM Zaika Restaurant! Share your honest dining experience with us in 30 seconds. For helpline & orders call 7488260572.'
+    config.welcomeMessage?.[config.settings?.defaultLanguage || 'en'] ||
+      `Welcome to ${restaurantName || 'our restaurant'}! Share your honest dining experience with us in 30 seconds.`
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)

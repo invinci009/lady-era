@@ -1,18 +1,21 @@
 import type { MetadataRoute } from 'next'
+import { getRestaurantConfig } from '@/config/loader'
 
 export default function manifest(): MetadataRoute.Manifest {
+  const config = getRestaurantConfig()
+
   return {
-    name: 'PM Zaika Restaurant — Feedback & Reviews',
-    short_name: 'PM Zaika',
-    description: 'Instant QR customer feedback, smart AI reviews & live restaurant management dashboard for PM Zaika Restaurant, Patna',
+    name: `${config.name} — Feedback & Reviews`,
+    short_name: config.name,
+    description: `Instant QR customer feedback, smart AI reviews & live restaurant management dashboard for ${config.name}${config.location?.city ? `, ${config.location.city}` : ''}`,
     start_url: '/',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait-primary',
     background_color: '#020617',
-    theme_color: '#0f172a',
+    theme_color: config.branding?.primaryColor || '#0f172a',
     categories: ['food', 'business', 'productivity', 'lifestyle'],
-    lang: 'en',
+    lang: config.settings?.defaultLanguage || 'en',
     dir: 'ltr',
     prefer_related_applications: false,
     icons: [
@@ -44,8 +47,8 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: 'Guest Feedback Survey',
         short_name: 'Feedback',
-        description: 'Open customer survey experience for PM Zaika Restaurant',
-        url: '/r/pm-zaika',
+        description: `Open customer survey experience for ${config.name}`,
+        url: `/r/${config.slug}`,
         icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
       },
       {

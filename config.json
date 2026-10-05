@@ -1,6 +1,9 @@
 {
   "name": "Maa Parvati Restaurant",
   "slug": "maa-parvati-restaurant",
+  "hindiName": "माँ पार्वती रेस्टोरेंट",
+  "cuisine": "Authentic Indian & Family Dining",
+  "tagline": "Special Family Dining",
   "contact": {
     "phone": "+919334058472",
     "helpline": "+919334058472",
@@ -8,8 +11,10 @@
   },
   "location": {
     "address": "Maurya Path, Jyotipuram Colony, Khajpura",
+    "area": "Khajpura",
     "city": "Patna",
     "state": "Bihar",
+    "pincode": "800014",
     "country": "India"
   },
   "google": {

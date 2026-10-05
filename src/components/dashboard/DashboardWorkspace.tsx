@@ -12,6 +12,7 @@ import CustomersPortalTab, { type CustomerDetail } from './CustomersPortalTab'
 import MobileBottomNav from './MobileBottomNav'
 import MobileMenuDrawer from './MobileMenuDrawer'
 import { usePwa } from '@/components/pwa/PwaProvider'
+import { useClientConfig } from '@/config/client'
 import {
   LayoutDashboard,
   QrCode,
@@ -61,6 +62,7 @@ export default function DashboardWorkspace({
   const queryTab = searchParams.get('tab')
   const initialTab = propInitialTab || queryTab
   const { isInstallable, isInstalled, promptInstall, setShowInstallModal } = usePwa()
+  const { config } = useClientConfig()
 
   const [activeTab, setActiveTab] = useState<TabType>(
     initialTab && VALID_TABS.includes(initialTab as TabType) ? (initialTab as TabType) : 'overview'
@@ -135,7 +137,7 @@ export default function DashboardWorkspace({
           <div className="flex items-center gap-2 self-start sm:self-auto">
             {/* Live Survey Guest Preview */}
             <Link
-              href={campaigns[0]?.slug ? `/r/${campaigns[0].slug}` : '/r/pm-zaika'}
+              href={campaigns[0]?.slug ? `/r/${campaigns[0].slug}` : `/r/${config.slug}`}
               target="_blank"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors shadow-xs active:scale-95"
             >

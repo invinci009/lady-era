@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * PM Zaika Restaurant - Change Admin Password CLI Script (Firebase)
+ * White-Label Restaurant Template - Change Admin Password CLI Script (Firebase)
  *
  * Usage:
  *   node scripts/change-password.js <newPassword> [usernameOrEmail]
@@ -9,33 +9,38 @@
  * Examples:
  *   npm run change-password MyNewSecretPass123
  *   npm run change-password MyNewSecretPass123 admin
- *   npm run change-password MyNewSecretPass123 invincibleperson9@gmail.com
  */
 
 const fs = require('fs')
 const path = require('path')
 
-const PRIMARY_EMAIL = 'invincibleperson9@gmail.com'
+let restaurantName = 'Restaurant'
+let primaryEmail = 'admin@restaurant.com'
+let slug = 'restaurant'
+
+const configPath = path.join(process.cwd(), 'config.json')
+if (fs.existsSync(configPath)) {
+  try {
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+    if (config.name) restaurantName = config.name
+    if (config.contact?.email) primaryEmail = config.contact.email
+    if (config.slug) slug = config.slug
+  } catch {}
+}
+
 const ALIASES = new Set([
   'admin',
   'owner',
-  'zaika',
-  'pmzaika',
-  'pm-zaika',
-  'admin@pmzaika.com',
-  'owner@pmzaika.com',
-  'admin@pm-zaika.com',
-  'owner@pm-zaika.com',
-  'pmzaika@gmail.com',
-  'pmzaikapatna@gmail.com',
-  'biryani',
-  'charminar',
+  'manager',
+  'staff',
+  slug,
+  restaurantName.toLowerCase().replace(/[^a-z0-9]+/g, ''),
 ])
 
 function resolveEmail(input) {
-  if (!input) return PRIMARY_EMAIL
+  if (!input) return primaryEmail
   const clean = input.trim().toLowerCase()
-  if (ALIASES.has(clean)) return PRIMARY_EMAIL
+  if (ALIASES.has(clean)) return primaryEmail
   return input.trim()
 }
 
@@ -94,7 +99,7 @@ const auth = getAuth()
 
 async function run() {
   console.log('\n======================================================')
-  console.log('   PM Zaika Restaurant — Change Password CLI (Firebase)')
+  console.log(`   ${restaurantName} — Change Password CLI (Firebase)`)
   console.log('======================================================')
   console.log(`Target User: ${targetEmail} (input: "${userInput}")`)
 
@@ -120,7 +125,7 @@ async function run() {
   console.log('------------------------------------------------------')
   console.log('You can now log in at:')
   console.log('  Local:      http://localhost:3000/login')
-  console.log('  Production: https://pmzaikaqr.vercel.app/login')
+  console.log(`  Production: https://${slug}.vercel.app/login`)
   console.log('  Username:   admin (or ' + user.email + ')\n')
 }
 
