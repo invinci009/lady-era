@@ -292,36 +292,46 @@ export default function QuizFlow({
         <OfflineBanner hasSyncError={hasSyncError} onRetry={handleRetry} />
         <main className="relative z-10 w-full max-w-md mx-auto my-auto py-2 sm:py-6">
           <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-white border border-rose-100 shadow-[0_20px_60px_-15px_rgba(225,29,72,0.1),0_4px_20px_rgba(0,0,0,0.03)] space-y-5 sm:space-y-6 text-center animate-in fade-in zoom-in-95 duration-300">
-            {/* Crest / Monogram Icon */}
-            <div className="relative mx-auto w-20 h-20">
-              <div className="w-20 h-20 mx-auto rounded-3xl bg-black text-white flex items-center justify-center shadow-xl shadow-rose-600/25 overflow-hidden border-2 border-rose-300">
+            {/* Signboard-style brand panel */}
+            <div
+              className="w-full rounded-2xl px-4 py-5 text-center"
+              style={{
+                background: 'linear-gradient(145deg, #080808 0%, #160808 100%)',
+                boxShadow: '0 0 30px rgba(225,29,72,0.2), inset 0 1px 0 rgba(225,29,72,0.15)',
+                border: '1.5px solid rgba(225,29,72,0.3)',
+              }}
+            >
+              {/* LE Logo with glow */}
+              <div
+                className="w-20 h-20 mx-auto mb-3 overflow-hidden relative"
+                style={{ filter: 'drop-shadow(0 0 14px rgba(225,29,72,0.7))' }}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={logoUrl || '/ladys-era-logo.png'} alt={restaurantName} className="w-full h-full object-contain" />
               </div>
-              <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-white shadow-xs border border-stone-200 text-rose-600">
-                <Sparkles className="w-4 h-4 fill-amber-400" />
-              </div>
-            </div>
 
-            {/* Restaurant Name & Subtitle */}
-            <div className="space-y-1.5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-                {restaurantName || config.name || "Lady's Era"}
+              {/* Hindi name with ® */}
+              <h1
+                className="text-4xl font-black leading-tight tracking-wide"
+                style={{
+                  color: '#e8186d',
+                  fontFamily: "'Noto Sans Devanagari', sans-serif",
+                  textShadow: '0 0 20px rgba(232,24,109,0.6), 0 2px 8px rgba(0,0,0,0.9)',
+                }}
+              >
+                Lady&apos;s Era<sup className="text-lg align-super ml-0.5">®</sup>
               </h1>
-              <p className="text-sm font-semibold italic text-rose-700">
-                A place for Fashion Freaks
+
+              {/* Golden tagline */}
+              <p
+                className="mt-2 text-sm font-bold italic tracking-wide"
+                style={{
+                  color: '#f5c518',
+                  textShadow: '0 0 10px rgba(245,197,24,0.4)',
+                }}
+              >
+                A Place For Fashion Freak
               </p>
-              <div className="pt-1 flex items-center justify-center gap-2 text-xs text-stone-500">
-                <span className="flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60">
-                  <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> 4.8 • {config.tagline || 'Special Dining'}
-                </span>
-                <span>•</span>
-                <span>
-                  {config.location?.area
-                    ? `${config.location.area}, ${config.location.city || 'Patna'}`
-                    : config.location?.city || 'Patna'}
-                </span>
-              </div>
             </div>
 
             {/* Prominent Customer Contact Box (Main Phone Display for Customers) */}
