@@ -50,15 +50,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-extrabold shadow-md group-hover:scale-105 transition-transform border border-white/20 text-xs tracking-wider"
-                style={{ backgroundColor: branding.primary }}
+                className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-md group-hover:scale-105 transition-transform border border-rose-500/30 bg-black shrink-0"
               >
-                {config.name.charAt(0)}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={branding.logoUrl || '/ladys-era-logo.png'}
+                  alt={config.name}
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-base text-white tracking-tight leading-tight">{config.name}</span>
-                <span className="text-[10px] font-semibold leading-none" style={{ color: branding.primary }}>
-                  Boutique Portal
+                <span className="text-[10px] font-semibold leading-none italic" style={{ color: branding.primary }}>
+                  A place for Fashion Freaks
                 </span>
               </div>
             </Link>

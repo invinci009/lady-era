@@ -294,13 +294,9 @@ export default function QuizFlow({
           <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-white border border-rose-100 shadow-[0_20px_60px_-15px_rgba(225,29,72,0.1),0_4px_20px_rgba(0,0,0,0.03)] space-y-5 sm:space-y-6 text-center animate-in fade-in zoom-in-95 duration-300">
             {/* Crest / Monogram Icon */}
             <div className="relative mx-auto w-20 h-20">
-              <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-rose-600 via-pink-600 to-amber-500 text-white flex items-center justify-center shadow-xl shadow-rose-600/25 overflow-hidden border-2 border-rose-200">
-                {logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logoUrl} alt={restaurantName} className="w-full h-full object-cover" />
-                ) : (
-                  <ShoppingBag className="w-9 h-9" />
-                )}
+              <div className="w-20 h-20 mx-auto rounded-3xl bg-black text-white flex items-center justify-center shadow-xl shadow-rose-600/25 overflow-hidden border-2 border-rose-300">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logoUrl || '/ladys-era-logo.png'} alt={restaurantName} className="w-full h-full object-contain" />
               </div>
               <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-white shadow-xs border border-stone-200 text-rose-600">
                 <Sparkles className="w-4 h-4 fill-amber-400" />
@@ -312,11 +308,9 @@ export default function QuizFlow({
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
                 {restaurantName || config.name || "Lady's Era"}
               </h1>
-              {(config.hindiName || (config as { category?: string }).category || config.cuisine) && (
-                <p className="text-sm font-semibold text-rose-800">
-                  {[config.hindiName, (config as { category?: string }).category || config.cuisine].filter(Boolean).join(' • ')}
-                </p>
-              )}
+              <p className="text-sm font-semibold italic text-rose-700">
+                A place for Fashion Freaks
+              </p>
               <div className="pt-1 flex items-center justify-center gap-2 text-xs text-stone-500">
                 <span className="flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60">
                   <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> 4.8 • {config.tagline || 'Special Dining'}

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Eye, EyeOff, Loader2, LogIn, AlertCircle, CheckCircle2, Sparkles, KeyRound, UserCheck, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, Loader2, LogIn, AlertCircle, CheckCircle2, KeyRound, UserCheck, ShieldCheck } from 'lucide-react'
 import ChangePasswordModal from '@/components/auth/ChangePasswordModal'
 import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal'
 import { useClientConfig } from '@/config/client'
@@ -76,17 +76,14 @@ export default function LoginPage() {
     <>
       <Card className="border border-slate-800 bg-slate-900/85 backdrop-blur-xl shadow-2xl text-slate-100 rounded-3xl overflow-hidden">
         <CardHeader className="space-y-1.5 pb-3">
-          <div className="flex items-center gap-2 mb-1">
-            <div
-              className="w-9 h-9 rounded-xl text-white flex items-center justify-center font-bold text-xs shadow-md overflow-hidden border border-rose-500/30"
-              style={{ backgroundColor: branding.primary }}
-            >
-              {branding.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={branding.logoUrl} alt={restaurantName || "Lady's Era"} className="w-full h-full object-cover" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shadow-lg border border-rose-500/30 bg-black shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={branding.logoUrl || '/ladys-era-logo.png'}
+                alt={restaurantName || "Lady's Era"}
+                className="w-full h-full object-contain"
+              />
             </div>
             <span className="text-xs font-bold uppercase tracking-wider" style={{ color: branding.primary }}>
               {restaurantName || "Lady's Era"} Admin

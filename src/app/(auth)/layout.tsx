@@ -19,13 +19,18 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="relative w-full max-w-md z-10">
         <div className="text-center mb-8">
           <div
-            className="inline-flex items-center justify-center w-12 h-12 rounded-xl text-white shadow-lg mb-3"
-            style={{ backgroundColor: branding.primary, boxShadow: `0 10px 15px -3px ${branding.primary}40` }}
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-black shadow-lg mb-3 overflow-hidden border border-rose-500/30"
+            style={{ boxShadow: `0 10px 15px -3px ${branding.primary}40` }}
           >
-            <span className="font-black text-xl tracking-wider">{restaurantName.charAt(0)}</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={branding.logoUrl || '/ladys-era-logo.png'}
+              alt={restaurantName}
+              className="w-full h-full object-contain"
+            />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">{restaurantName}</h1>
-          <p className="text-sm text-slate-400 mt-1">Exclusive Women&apos;s Fashion &amp; Boutique Experience</p>
+          <p className="text-sm italic mt-1" style={{ color: branding.primary }}>A place for Fashion Freaks</p>
         </div>
         {children}
       </div>
