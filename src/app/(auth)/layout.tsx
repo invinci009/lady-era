@@ -60,7 +60,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 textShadow: '0 0 10px rgba(245,197,24,0.5)',
               }}
             >
-              A Place For Fashion Freak
+              (A Place For Fashion Freak)
             </p>
           </div>
         </div>
